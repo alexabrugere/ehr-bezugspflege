@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Patientendetails</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+
+    <!-- Hospital-style top bar -->
+<div class="header">
+    <div class="header-title">
+        <span>📄 Patientendetails – {{ patient.name }}</span>
+    </div>
+
+    <div class="nav-links">
+        {% if current_nurse %}
+            <span class="current-nurse-label">
+                👩‍⚕️ Eingeloggt als: {{ current_nurse["name"] }}
+            </span>
+        {% endif %}
+        <a href="{{ url_for('logout') }}">🚪 Abmelden</a>
+        <a href="{{ url_for('home') }}">🧑‍⚕️ Alle Patienten</a>
+        <a href="{{ url_for('tasks_view', patient_id=patient.id) }}">✅ patientenspezifische Aufgaben</a>
+        <a href="{{ url_for('labs_view', patient_id=patient.id) }}"><span class="icon">🧪</span> Labore</a>
+        <a href="{{ url_for('flowsheet', patient_id=patient.id) }}">📈 Flowsheet</a>
+    </div>
+</div>
+
+
+    <div class="container">
+
+        {% if alerts %}
+<div class="alert-section">
+    <h3>Klinische Warnungen</h3>
+
+    {% for a in alerts %}
+        <div class="alert-box {{ a.severity }}">
+            <strong>{{ a.severity | upper }}</strong>: {{ a.alert }}
+            <div class="alert-time">{{ a["created_at"].replace("T", " ") }}</div>
+        </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+
+                <!-- ===== PATIENT HEADER ===== -->
+<div class="patient-header-block">
+
+    <div class="patient-photo-container">
+
+    <!-- Patient Photo -->
+    {% if patient["photo_filename"] %}
+        <img src="{{ url_for('static', filename='uploads/' ~ patient['photo_filename']) }}"
+             alt="Patientenfoto"
+             class="patient-photo-img">
+    {% else %}
+        <div class="patient-photo-placeholder">
+            {% if patient['gender'] == 'F' %}
+                👩
+            {% elif patient['gender'] == 'M' %}
+                👨
+            {% else %}
+                🙂
+            {% endif %}
+        </div>
+    {% endif %}
+
+    <!-- Hover overlay -->
+    <div class="patient-photo-overlay">
+        <label for="photo-input" class="photo-upload-trigger">
+            Foto ändern
+        </label>
+        <label for="delete" class="photo-upload-trigger">
+            Foto löschen
+        </label>
+    </div>
+
+
+    <!-- Hidden upload form -->
+    <form id="photo-upload-form"
+          method="POST"
+          action="{{ url_for('upload_photo', patient_id=patient['id']) }}"
+          enctype="multipart/form-data">
+        <input type="file"
+               id="photo-input"
+               name="photo"
+               accept="image/*"
+               style="display: none;"
+               onchange="document.getElementById('photo-upload-form').submit()">
+    </form>
+
+       {% if patient["photo_filename"] %}
+    <form id="delete-photo"
+      method="POST"
+      action="{{ url_for('delete_photo', patient_id=patient['id']) }}">
+         <input type="submit"
+                id="delete">
+    </form>
+    {% endif %}
+    </div>
+
+
+    <!-- RIGHT: Clinical summary -->
+    <div class="clinical-info-column">
+
+        <h1 class="patient-header-title">
+            {{ patient["name"] }} — Klinische Übersicht</h1>
+
+        <div class="clinical-summary-grid">
+
+            <!-- COLUMN A -->
+            <div class="clinical-col">
+                <div class="field-row">
+                    <span class="field-label">Diagnose</span>
+                    <span class="field-value">{{ patient["diagnosis"] or "—" }}</span>
+                </div>
+
+                <div class="field-row">
+                    <span class="field-label">Primärarzt</span>
+                    <span class="field-value">{{ patient["primary_doctor"] or "—" }}</span>
+                </div>
+
+                <div class="field-row">
+                    <span class="field-label">Bezugspflegeperson</span>
+                    <span class="field-value">{{ patient["bezugspflege_name"] or "—" }}</span>
+                </div>
+
+                <div class="field-row">
+                    <span class="field-label">Aufnahme</span>
+                    <span class="field-value">{{ patient["admission_date"] or "—" }}</span>
+                </div>
+            </div>
+
+            <!-- COLUMN B -->
+            <div class="clinical-col">
+                <div class="field-row">
+                    <span class="field-label">Geburtsdatum</span>
+                    <span class="field-value">{{ patient["dob"] or "—" }}</span>
+                </div>
+
+                <div class="field-row">
+                    <span class="field-label">Allergien</span>
+                    <span class="field-value">
+                        {% if patient["allergies"] %}
+                            {{ patient["allergies"] }}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </span>
+                </div>
+
+                <div class="field-row">
+                    <span class="field-label">Code-Status</span>
+                    <span class="field-value">
+                        {% if patient["code_status"] %}
+                            {{ patient["code_status"] }}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </span>
+                </div>
+
+                <div class="field-row">
+                    <span class="field-label">Geplante Entlassung</span>
+                    <span class="field-value">{{ patient["expected_discharge"] or "—" }}</span>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+        <!-- Medications -->
+<h3>Medikationsplan</h3>
+{% if meds %}
+    <table class="detail-table">
+        <thead>
+            <tr>
+                <th>Medikament</th>
+                <th>Dosis</th>
+                <th>Applikationsweg</th>
+                <th>Schema</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for m in meds %}
+                <tr>
+                    <td>{{ m["name"] }}</td>
+                    <td>{{ m["dose"] }}</td>
+                    <td>{{ m["route"] }}</td>
+                    <td>{{ m["schedule"] }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p>Keine Medikation dokumentiert.</p>
+{% endif %}
+
+<!-- Orders / tasks -->
+<h3>Ärztliche Anordnungen & Pflegeaufgaben</h3>
+{% if orders %}
+    <table class="detail-table">
+        <thead>
+            <tr>
+                <th>Typ</th>
+                <th>Beschreibung</th>
+                <th>Fällig</th>
+                <th>Status</th>
+                <th>Angeordnet von</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for o in orders %}
+                <tr>
+                    <td>{{ o["type"] or "Aufgabe" }}</td>
+                    <td>{{ o["description"] }}</td>
+                    <td>{{ o["due_date"] or "—" }}</td>
+                    <td>{{ o["status"] or "offen" }}</td>
+                    <td>{{ o["ordered_by"] or "—" }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p>Keine offenen Anordnungen/Pflegeaufgaben dokumentiert.</p>
+{% endif %}
+
+
+<!-- Doctor notes -->
+<h3>Ärztliche Notizen</h3>
+{% if doctor_notes %}
+    <ul class="note-list">
+        {% for n in doctor_notes %}
+            <li class="note-item">
+                <div class="note-meta">
+                    <span class="note-time">{{ n["created_at"].replace("T", " ") }}</span>
+                    <span class="note-author">{{ n["author"] }}</span>
+                </div>
+                <div class="note-text">
+                    {{ n["note"] }}
+                </div>
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>Keine ärztlichen Notizen dokumentiert.</p>
+{% endif %}
+
+
+<h3>Pflegerische Notizen</h3>
+{% if nurse_notes %}
+    <ul class="note-list">
+        {% for n in nurse_notes %}
+            <li class="note-item">
+                <div class="note-meta">
+                    <span class="note-time">{{ n["created_at"].replace("T", " ") }}</span>
+                    <span class="note-author">{{ n["author"] }}</span>
+                </div>
+                <div class="note-text">
+                    {{ n["note"] }}
+                </div>
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>Keine pflegerischen Notizen dokumentiert.</p>
+{% endif %}
+
+        <a href="{{ url_for('home') }}" class="back-link">← Zurück zur Patientenliste</a>
+
+    </div>
+
+    <!-- JS success popup after update -->
+    <script>
+        {% if updated %}
+            alert("Bezugspflege erfolgreich aktualisiert!");
+        {% endif %}
+    </script>
+
+<script>
+async function fetchAlerts() {
+    try {
+        const response = await fetch("{{ url_for('api_alerts') }}");
+        if (!response.ok) {
+            console.error("Alert API error", response.status);
+            return;
+        }
+        const alerts = await response.json();
+        renderAlerts(alerts);
+    } catch (err) {
+        console.error("Alert fetch failed", err);
+    }
+}
+
+function renderAlerts(alerts) {
+    let box = document.getElementById("global-alert-box");
+
+    // Create alert box only once
+    if (!box) {
+        box = document.createElement("div");
+        box.id = "global-alert-box";
+        box.className = "alert-container";
+        document.body.appendChild(box);
+    }
+
+    // No alerts → hide box
+    if (!alerts || alerts.length === 0) {
+        box.innerHTML = "";
+        box.style.display = "none";
+        return;
+    }
+
+    box.style.display = "block";
+
+    // Build alerts list with close button
+    box.innerHTML = `
+        ${alerts.map(a => {
+            const sevClass =
+                a.severity === "high" ? "alert-high" :
+                a.severity === "medium" ? "alert-medium" :
+                "alert-low";
+
+            return `
+                <div class="alert ${sevClass}">
+                <button class="alert-close" onclick="closeGlobalAlert()">✖</button>
+                    <strong>${a.type}</strong>
+                    <div>${a.patient_name} (${a.patient_identifier})</div>
+                    <div>${a.message}</div>
+                </div>
+            `;
+        }).join("")}
+    `;
+}
+
+// Close function with fade-out animation
+function closeGlobalAlert() {
+    const box = document.getElementById("global-alert-box");
+    box.classList.add("fade-out");
+
+    setTimeout(() => {
+        box.style.display = "none";
+        box.classList.remove("fade-out");
+    }, 400); // matches animation duration
+}
+
+// Initial load + refresh
+fetchAlerts();
+setInterval(fetchAlerts, 60000);
+</script>
+
+
+</body>
+</html>
+
+

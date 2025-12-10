@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Flowsheet – {{ patient.name }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+
+<body>
+
+<div class="header">
+    <div class="header-title">
+        <span>📈 Flowsheet – {{ patient.name }}</span>
+    </div>
+    <div class="nav-links">
+        {% if current_nurse %}
+            <span class="current-nurse-label">
+                👩‍⚕️ Eingeloggt als: {{ current_nurse["name"] }}
+            </span>
+        {% endif %}
+        <a href="{{ url_for('logout') }}">🚪 Abmelden</a>
+        <a href="{{ url_for('home') }}">🧑‍⚕️ Alle Patienten</a>
+        <a href="{{ url_for('tasks_view', patient_id=patient.id) }}">✅ patientenspezifische Aufgaben</a>
+        <a href="{{ url_for('labs_view', patient_id=patient.id) }}"><span class="icon">🧪</span> Labore</a>
+        <a href="{{ url_for('patient_detail', patient_id=patient.id) }}">📄 Patientendetails</a>
+    </div>
+</div>
+
+<div class="container">
+
+    {% if alerts %}
+<div class="alert-section">
+    <h3>Klinische Warnungen</h3>
+
+    {% for a in alerts %}
+        <div class="alert-box {{ a.severity }}">
+            <strong>{{ a.severity | upper }}</strong>: {{ a.alert }}
+            <div class="alert-time">{{ a["created_at"].replace("T", " ") }}</div>
+        </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+
+    <h1>Flowsheet – {{ patient.name }}</h1>
+    <a class="back-link" href="{{ url_for('patient_detail', patient_id=patient.id) }}">← Zurück zum Patienten</a>
+
+    <hr><br>
+
+    <!-- ================= LAST 5 ASSESSMENTS (VITALS – HORIZONTAL TABLE) ================= -->
+   <h2>Letzte 5 Einschätzungen (Vitalzeichen)</h2>
+
+{% if recent_assessments %}
+<div class="vitals-history-card">
+    <table class="vitals-history-table">
+        <thead>
+            <tr>
+                <th>Parameter</th>
+                {% for a in recent_assessments %}
+                    <th>{{ a["created_at"].replace("T", " ") }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Temp (°C)</td>
+                {% for a in recent_assessments %}
+                    <td>
+                        {% if a.temperature is not none %}
+                            <span class="vital-chip and {% if a.temperature < 36 or a.temperature > 38 %}vital-high{% endif %}">
+                                {{ a.temperature }}</span>
+                        {% else %}–{% endif %}
+                    </td>
+                {% endfor %}
+            </tr>
+            <tr>
+                <td>Puls</td>
+                {% for a in recent_assessments %}
+                    <td>
+                        {% if a.heart_rate is not none %}
+                            <span class="vital-chip and {% if a.heart_rate < 60 or a.heart_rate > 110 %}vital-high{% endif %}">
+                                {{ a.heart_rate }}</span>
+                        {% else %}–{% endif %}
+                    </td>
+                {% endfor %}
+            </tr>
+            <tr>
+                <td>AF</td>
+                {% for a in recent_assessments %}
+                    <td>
+                        {% if a.respiration_rate is not none %}
+                            <span class="vital-chip {% if a.respiration_rate < 12 or a.respiration_rate > 20 %}vital-high{% endif %}">
+                                {{ a.respiration_rate }}
+                            </span>
+                        {% else %}–{% endif %}
+                    </td>
+                {% endfor %}
+            </tr>
+            <tr>
+                <td>RR syst</td>
+                {% for a in recent_assessments %}
+                    <td>
+                        {% if a.systolic_bp is not none %}
+                            <span class="vital-chip {% if a.systolic_bp < 90 or a.systolic_bp > 140 %}vital-high{% endif %}">
+                                {{ a.systolic_bp }}
+                            </span>
+                        {% else %}–{% endif %}
+                    </td>
+                {% endfor %}
+            </tr>
+                <tr>
+                    <td>RR diast</td>
+                    {% for a in recent_assessments %}
+                        <td>
+                            {% if a.diastolic_bp is not none %}
+                                <span class="vital-chip {% if a.diastolic_bp < 60 or a.diastolic_bp > 90 %}vital-high{% endif %}">
+                                    {{ a.diastolic_bp }}
+                                </span>
+                            {% else %}–{% endif %}
+                        </td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>SpO₂ (%)</td>
+                    {% for a in recent_assessments %}
+                        <td>
+                            {% if a.oxygen_sat is not none %}
+                                <span class="vital-chip {% if a.oxygen_sat < 90 %}vital-high{% endif %}">
+                                    {{ a.oxygen_sat }}
+                                </span>
+                            {% else %}–{% endif %}
+                        </td>
+                    {% endfor %}
+                </tr>
+
+        </tbody>
+    </table>
+</div>
+{% else %}
+    <p>Noch keine Einschätzungen vorhanden.</p>
+{% endif %}
+
+
+    <br><hr><br>
+
+    <!-- ================= FLOWSHEET ENTRY FORM ================= -->
+    <h2>Neue Einschätzung dokumentieren</h2>
+
+    <form action="{{ url_for('flowsheet', patient_id=patient.id) }}" method="POST">
+
+        <!-- -------- VITALS: HORIZONTAL GRID -------- -->
+        <h3>Vitalzeichen</h3>
+        <div class="vitals-card">
+        <div class="vitals-grid">
+             <label><span class="vital-label">Atemfrequenz</span>
+                <input type="number" name="respiration_rate" min="0" max="80">
+            </label>
+            <label><span class="vital-label">Puls (bpm)</span>
+                <input type="number" name="heart_rate" min="0" max="250">
+            </label>
+            <label><span class="vital-label">Temperatur (°C)</span>
+                <input type="number" step="0.1" name="temperature" min="25" max="45">
+            </label>
+            <label><span class="vital-label">SpO₂ (%)</span>
+                <input type="number" name="oxygen_sat" min="50" max="100">
+            </label>
+            <label><span class="vital-label">RR systolisch</span>
+                <input type="number" name="systolic_bp" min="40" max="250">
+            </label>
+            <label><span class="vital-label">RR diastolisch</span>
+                <input type="number" name="diastolic_bp" min="20" max="150">
+            </label>
+        </div>
+            </div>
+
+        <br><hr><br>
+
+        <!-- -------- BODY SYSTEMS: VERTICAL DOCUMENTATION -------- -->
+<h3>Körperliche Einschätzung</h3>
+
+<!-- WNL BUTTON -->
+<p>
+    <button type="button" class="btn-secondary" onclick="setWNL()">
+        Alle Systeme WNL eintragen
+    </button>
+</p>
+
+<div class="table-wrapper flowsheet-body-wrapper">
+    <table class="flowsheet-table flowsheet-table-vertical">
+
+        {# letze 3 Einschätzungen vorbereiten #}
+        {% set last_three = recent_assessments[:3] if recent_assessments else [] %}
+
+        <thead>
+            <tr>
+                <th>System</th>
+                {% for a in last_three %}
+                    <th>{{ a["created_at"].replace("T", " ") }}</th>
+                {% endfor %}
+                <th>Neue Dokumentation</th>
+            </tr>
+        </thead>
+
+        <tbody>
+        {% if last_three %}
+            <!-- HAUT -->
+            <tr>
+                <td class="system-label">Haut</td>
+                {% for a in last_three %}
+                    <td class="note-author">{{ a["skin"] or "NA" }}~{{ a.author }}</td>
+                {% endfor %}
+                <td>
+                    <textarea name="skin" rows="2" class="flowsheet-input"></textarea>
+                </td>
+            </tr>
+
+            <!-- HERZ-KREISLAUF -->
+            <tr>
+                <td class="system-label">Herz-Kreislauf</td>
+                {% for a in last_three %}
+                    <td class="note-author">{{ a["cardiac"] or "NA" }}~{{ a.author }}</td>
+                {% endfor %}
+                <td>
+                    <textarea name="cardiac" rows="2" class="flowsheet-input"></textarea>
+                </td>
+            </tr>
+
+            <!-- ATMUNG -->
+            <tr>
+                <td class="system-label">Atmung</td>
+                {% for a in last_three %}
+                    <td class="note-author">{{ a["respiratory"] or "NA" }}~{{ a.author }}</td>
+                {% endfor %}
+                <td>
+                    <textarea name="respiratory" rows="2" class="flowsheet-input"></textarea>
+                </td>
+            </tr>
+
+            <!-- ENDOKRIN -->
+            <tr>
+                <td class="system-label">Endokrin</td>
+                {% for a in last_three %}
+                    <td class="note-author">{{ a["endocrine"] or "NA" }}~{{ a.author }}</td>
+                {% endfor %}
+                <td>
+                    <textarea name="endocrine" rows="2" class="flowsheet-input"></textarea>
+                </td>
+            </tr>
+
+            <!-- LYMPHSYSTEM -->
+            <tr>
+                <td class="system-label">Lymphsystem</td>
+                {% for a in last_three %}
+                    <td class="note-author">{{ a["lymphatic"] or "NA" }}~{{ a.author }}</td>
+                {% endfor %}
+                <td>
+                    <textarea name="lymphatic" rows="2" class="flowsheet-input"></textarea>
+                </td>
+            </tr>
+
+            <!-- BEWEGUNGSAPPARAT -->
+            <tr>
+                <td class="system-label">Bewegungsapparat</td>
+                {% for a in last_three %}
+                    <td class="note-author">{{ a["musculoskeletal"] or "NA" }}~{{ a.author }}</td>
+                {% endfor %}
+                <td>
+                    <textarea name="musculoskeletal" rows="2" class="flowsheet-input"></textarea>
+                </td>
+            </tr>
+
+            <!-- NEUROLOGISCH -->
+            <tr>
+                <td class="system-label">Neurologisch</td>
+                {% for a in last_three %}
+                    <td class="note-author">{{ a["neuro"] or "NA" }}~{{ a.author }}</td>
+                {% endfor %}
+                <td>
+                    <textarea name="neuro" rows="2" class="flowsheet-input"></textarea>
+                </td>
+            </tr>
+
+            <!-- MAGEN-DARM -->
+            <tr>
+                <td class="system-label">Magen-Darm</td>
+                {% for a in last_three %}
+                    <td class="note-author">{{ a["gastro"] or "NA" }}~{{ a.author }}</td>
+                {% endfor %}
+                <td>
+                    <textarea name="gastro" rows="2" class="flowsheet-input"></textarea>
+                </td>
+            </tr>
+
+            <!-- SONSTIGES -->
+            <tr>
+                <td class="system-label">Weitere Beobachtungen</td>
+                {% for a in last_three %}
+                    <td class="note-author">{{ a["other_notes"] or "NA" }}~{{ a.author }}</td>
+                {% endfor %}
+                <td>
+                    <textarea name="other_notes" rows="3" class="flowsheet-input"></textarea>
+                </td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="2">
+                    <em>Noch keine körperlichen Einschätzungen dokumentiert.</em>
+                </td>
+            </tr>
+
+            <!-- Nur neue Dokumentation, falls noch keine Historie -->
+            <tr>
+                <td class="system-label">Haut</td>
+                <td>
+                    <textarea id="skin" name="skin" rows="2" class="flowsheet-input"></textarea>
+                </td>
+            </tr>
+            <tr>
+                <td class="system-label">Herz-Kreislauf</td>
+                <td>
+                    <textarea id="cardiac" name="cardiac" rows="2" class="flowsheet-input"></textarea>
+                </td>
+            </tr>
+            <tr>
+                <td class="system-label">Atmung</td>
+                <td>
+                    <textarea id="respiratory" name="respiratory" rows="2" class="flowsheet-input"></textarea>
+                </td>
+            </tr>
+            <tr>
+                <td class="system-label">Endokrin</td>
+                <td>
+                    <textarea id="endocrine" name="endocrine" rows="2" class="flowsheet-input"></textarea>
+                </td>
+            </tr>
+             <tr>
+                 <td class="system-label">Lymphsystem</td>
+                <td>
+                    <textarea id="lymphatic" name="lymphatic" rows="2" class="flowsheet-input"></textarea>
+                </td>
+            </tr>
+            <tr>
+                <td class="system-label">Bewegungsapparat</td>
+                <td>
+                    <textarea id="musculoskeletal" name="musculoskeletal" rows="2" class="flowsheet-input"></textarea>
+                </td>
+            </tr>
+             <tr>
+                <td class="system-label">Neurologisch</td>
+                <td>
+                    <textarea id="neuro" name="neuro" rows="2" class="flowsheet-input"></textarea>
+                </td>
+            </tr>
+            <tr>
+                <td class="system-label">Magen-Darm</td>
+                <td>
+                    <textarea id="gastro" name="gastro" rows="2" class="flowsheet-input"></textarea>
+                </td>
+            </tr>
+            <tr>
+                <td class="system-label">Weitere Beobachtungen</td>
+                <td>
+                    <textarea id="other_notes" name="other_notes" rows="2" class="flowsheet-input"></textarea>
+                </td>
+            </tr>
+        {% endif %}
+        </tbody>
+    </table>
+</div>
+
+<button type="submit" class="btn-primary">Einschätzung speichern</button>
+
+    </form>
+
+    <br><hr><br>
+
+</div>
+
+<!-- ============ WNL JAVASCRIPT ============ -->
+<script>
+function setWNL() {
+    const fields = [
+        "skin",
+        "cardiac",
+        "respiratory",
+        "endocrine",
+        "lymphatic",
+        "musculoskeletal",
+        "neuro",
+        "gastro"
+    ];
+
+    fields.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.value = "WNL";
+        }
+    });
+}
+</script>
+
+<!-- ============ ALERT JAVASCRIPT (unchanged) ============ -->
+<script>
+async function fetchAlerts() {
+    try {
+        const response = await fetch("{{ url_for('api_alerts') }}");
+        if (!response.ok) {
+            console.error("Alert API error", response.status);
+            return;
+        }
+        const alerts = await response.json();
+        renderAlerts(alerts);
+    } catch (err) {
+        console.error("Alert fetch failed", err);
+    }
+}
+
+function renderAlerts(alerts) {
+    let box = document.getElementById("global-alert-box");
+
+    if (!box) {
+        box = document.createElement("div");
+        box.id = "global-alert-box";
+        box.className = "alert-container";
+        document.body.appendChild(box);
+    }
+
+    if (!alerts || alerts.length === 0) {
+        box.innerHTML = "";
+        box.style.display = "none";
+        return;
+    }
+
+    box.style.display = "block";
+
+    box.innerHTML = `
+        ${alerts.map(a => {
+            const sevClass =
+                a.severity === "high" ? "alert-high" :
+                a.severity === "medium" ? "alert-medium" :
+                "alert-low";
+
+            return `
+                <div class="alert ${sevClass}">
+                    <button class="alert-close" onclick="closeGlobalAlert()">✖</button>
+                    <strong>${a.type}</strong>
+                    <div>${a.patient_name} (${a.patient_identifier})</div>
+                    <div>${a.message}</div>
+                </div>
+            `;
+        }).join("")}
+    `;
+}
+
+function closeGlobalAlert() {
+    const box = document.getElementById("global-alert-box");
+    box.classList.add("fade-out");
+
+    setTimeout(() => {
+        box.style.display = "none";
+        box.classList.remove("fade-out");
+    }, 400);
+}
+
+fetchAlerts();
+setInterval(fetchAlerts, 60000);
+</script>
+
+<!-- ============ ALERT JAVASCRIPT (unchanged) ============ -->
+<script>
+async function fetchAlerts() {
+    try {
+        const response = await fetch("{{ url_for('api_alerts') }}");
+        if (!response.ok) {
+            console.error("Alert API error", response.status);
+            return;
+        }
+        const alerts = await response.json();
+        renderAlerts(alerts);
+    } catch (err) {
+        console.error("Alert fetch failed", err);
+    }
+}
+
+function renderAlerts(alerts) {
+    let box = document.getElementById("global-alert-box");
+
+    if (!box) {
+        box = document.createElement("div");
+        box.id = "global-alert-box";
+        box.className = "alert-container";
+        document.body.appendChild(box);
+    }
+
+    if (!alerts || alerts.length === 0) {
+        box.innerHTML = "";
+        box.style.display = "none";
+        return;
+    }
+
+    box.style.display = "block";
+
+    box.innerHTML = `
+        ${alerts.map(a => {
+            const sevClass =
+                a.severity === "high" ? "alert-high" :
+                a.severity === "medium" ? "alert-medium" :
+                "alert-low";
+
+            return `
+                <div class="alert ${sevClass}">
+                    <button class="alert-close" onclick="closeGlobalAlert()">✖</button>
+                    <strong>${a.type}</strong>
+                    <div>${a.patient_name} (${a.patient_identifier})</div>
+                    <div>${a.message}</div>
+                </div>
+            `;
+        }).join("")}
+    `;
+}
+
+function closeGlobalAlert() {
+    const box = document.getElementById("global-alert-box");
+    box.classList.add("fade-out");
+
+    setTimeout(() => {
+        box.style.display = "none";
+        box.classList.remove("fade-out");
+    }, 400);
+}
+
+fetchAlerts();
+setInterval(fetchAlerts, 60000);
+</script>
+
+</body>
+</html>
+
+

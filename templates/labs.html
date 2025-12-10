@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Labore – {{ patient.name if patient else "Alle Patienten" }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+
+<div class="header">
+    <div class="header-title">
+        <span class="icon">🧪</span>
+        <span>Labore – {{ patient.name }}</span>
+    </div>
+    <div class="nav-links">
+        {% if current_nurse %}
+            <span class="current-nurse-label">
+                👩‍⚕️ Eingeloggt als: {{ current_nurse["name"] }}
+            </span>
+        {% endif %}
+        <a href="{{ url_for('logout') }}">🚪 Abmelden</a>
+        <a href="{{ url_for('home') }}">🧑‍⚕️ Alle Patienten</a>
+        <a href="{{ url_for('tasks_view', patient_id=patient.id) }}">✅ patientenspezifische Aufgaben</a>
+        <a href="{{ url_for('patient_detail', patient_id=patient.id) }}">📄 Patientendetails</a>
+        <a href="{{ url_for('flowsheet', patient_id=patient.id) }}">📈 Flowsheet</a>
+    </div>
+</div>
+
+<div class="container">
+
+    {% if alerts %}
+<div class="alert-section">
+    <h3>Klinische Warnungen</h3>
+
+    {% for a in alerts %}
+        <div class="alert-box {{ a.severity }}">
+            <strong>{{ a.severity | upper }}</strong>: {{ a.alert }}
+            <div class="alert-time">{{ a["created_at"].replace("T", " ") }}</div>
+        </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+    <h1>Laborübersicht</h1>
+
+    <p>
+        <a class="back-link" href="{{ url_for('home') }}">← Zurück zur Patientenübersicht</a>
+    </p>
+
+    {% if patients|length == 1 %}
+        <h2>Patient: {{ patients[0]["name"] }} ({{ patients[0]["patient_identifier"] }})</h2>
+    {% else %}
+        <h2>Alle Patienten</h2>
+    {% endif %}
+
+    <hr>
+
+    <!-- ========== PENDING LABS ========== -->
+    <h3>Ausstehende Laboranforderungen</h3>
+    {% if pending_labs %}
+        <table class="simple-table">
+            <thead>
+                <tr>
+                    <th>Patient</th>
+                    <th>Untersuchung</th>
+                    <th>Priorität</th>
+                    <th>Status</th>
+                    <th>Angefordert am</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for o in pending_labs %}
+                    <tr>
+                        <td>{{ o["patient_name"] }} ({{ o["patient_identifier"] }})</td>
+                        <td>{{ o["name"] }}</td>
+                        <td>{{ o["priority"] }}</td>
+                        <td>{{ o["status"] }}</td>
+                        <td>{{ o["ordered_at"]| replace("T", " ") }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p><em>Keine ausstehenden Laboranforderungen.</em></p>
+    {% endif %}
+
+    <hr>
+
+    <!-- ========== RECENT LAB RESULTS (LAST 5 DAYS) ========== -->
+    <h3>Letzte Laborwerte (5 Tage)</h3>
+    {% if recent_labs %}
+        <table class="simple-table">
+            <thead>
+                <tr>
+                    <th>Patient</th>
+                    <th>Untersuchung</th>
+                    <th>Ergebnis</th>
+                    <th>Flag</th>
+                    <th>Datum/Zeit</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in recent_labs %}
+                    <tr>
+                        <td>{{ r["patient_name"] }} ({{ r["patient_identifier"] }})</td>
+                        <td>{{ r["name"] }}</td>
+                        <td>{{ r["result_value"] }}</td>
+                        <td>{{ r["result_flag"] or "–" }}</td>
+                        <td>{{ r["result_datetime"] }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p><em>Keine Laborwerte in den letzten 5 Tagen.</em></p>
+    {% endif %}
+
+    <hr>
+
+    <!-- ========== ORDER NEW LAB ========== -->
+    <h3>Neue Laboranforderung</h3>
+
+    <form method="POST" action="{{ url_for('labs_view', patient_id=patient_id) }}">
+        <!-- Make sure the server knows the patient -->
+        {% if patient_id %}
+            <input type="hidden" name="patient_id" value="{{ patient_id }}">
+        {% else %}
+            <label>Patient auswählen:
+                <select name="patient_id" required>
+                    <option value="">– bitte wählen –</option>
+                    {% for p in patients %}
+                        <option value="{{ p['id'] }}">
+                            {{ p['name'] }} ({{ p['patient_identifier'] }})
+                        </option>
+                    {% endfor %}
+                </select>
+            </label>
+            <br>
+        {% endif %}
+
+        <label>Untersuchung:
+    <select name="lab_name" required>
+        <option value="">– Bitte wählen –</option>
+        <option value="Blutbild (BB)">Blutbild (BB)</option>
+        <option value="CRP">CRP</option>
+        <option value="Kreatinin">Kreatinin</option>
+        <option value="Natrium">Natrium</option>
+        <option value="Kalium">Kalium</option>
+    </select>
+</label>
+
+
+        <label>Priorität:
+            <select name="priority">
+                <option value="">– Bitte wählen –</option>
+                <option value="Routine">Routine</option>
+                <option value="Dringend">Dringend</option>
+                <option value="Stat">Stat</option>
+            </select>
+        </label>
+
+        <button type="submit" class="btn-primary">Labor anfordern</button>
+    </form>
+
+</div>
+
+<script>
+async function fetchAlerts() {
+    try {
+        const response = await fetch("{{ url_for('api_alerts') }}");
+        if (!response.ok) {
+            console.error("Alert API error", response.status);
+            return;
+        }
+        const alerts = await response.json();
+        renderAlerts(alerts);
+    } catch (err) {
+        console.error("Alert fetch failed", err);
+    }
+}
+
+function renderAlerts(alerts) {
+    let box = document.getElementById("global-alert-box");
+
+    // Create alert box only once
+    if (!box) {
+        box = document.createElement("div");
+        box.id = "global-alert-box";
+        box.className = "alert-container";
+        document.body.appendChild(box);
+    }
+
+    // No alerts → hide box
+    if (!alerts || alerts.length === 0) {
+        box.innerHTML = "";
+        box.style.display = "none";
+        return;
+    }
+
+    box.style.display = "block";
+
+    // Build alerts list with close button
+    box.innerHTML = `
+        ${alerts.map(a => {
+            const sevClass =
+                a.severity === "high" ? "alert-high" :
+                a.severity === "medium" ? "alert-medium" :
+                "alert-low";
+
+            return `
+                <div class="alert ${sevClass}">
+                <button class="alert-close" onclick="closeGlobalAlert()">✖</button>
+                    <strong>${a.type}</strong>
+                    <div>${a.patient_name} (${a.patient_identifier})</div>
+                    <div>${a.message}</div>
+                </div>
+            `;
+        }).join("")}
+    `;
+}
+
+// Close function with fade-out animation
+function closeGlobalAlert() {
+    const box = document.getElementById("global-alert-box");
+    box.classList.add("fade-out");
+
+    setTimeout(() => {
+        box.style.display = "none";
+        box.classList.remove("fade-out");
+    }, 400); // matches animation duration
+}
+
+// Initial load + refresh
+fetchAlerts();
+setInterval(fetchAlerts, 60000);
+</script>
+
+</body>
+</html>

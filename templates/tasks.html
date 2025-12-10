@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Aufgabenübersicht</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+
+{% if viewing_all_patients %}
+<div class="header">
+    <div class="header-title">
+        <span class="icon">✅</span>
+        <span>Alle Aufgaben</span>
+    </div>
+    <div class="nav-links">
+        {% if current_nurse %}
+            <span class="current-nurse-label">
+                👩‍⚕️ Eingeloggt als: {{ current_nurse["name"] }}
+            </span>
+        {% endif %}
+        <a href="{{ url_for('logout') }}">🚪 Logout</a>
+        <a href="{{ url_for('home') }}">🧑‍⚕️ Alle Patienten</a>
+    </div>
+</div>
+{% endif %}
+
+{% if selected_patient %}
+<div class="header">
+    <div class="header-title">
+        <span class="icon">✅</span>
+        <span>Patientenspezifische Aufgaben – {{ selected_patient.name }}</span>
+    </div>
+    <div class="nav-links">
+        {% if current_nurse %}
+            <span class="current-nurse-label">
+                👩‍⚕️ Eingeloggt als: {{ current_nurse["name"] }}
+            </span>
+        {% endif %}
+        <a href="{{ url_for('logout') }}">🚪 Abmelden</a>
+        <a href="{{ url_for('home') }}">🧑‍⚕️ Alle Patienten</a>
+        <a href="{{ url_for('labs_view', patient_id=selected_patient.id) }}">
+            <span class="icon">🧪</span> Labore
+        </a>
+        <a href="{{ url_for('patient_detail', patient_id=selected_patient.id) }}">
+            📄 Patientendetails
+        </a>
+        <a href="{{ url_for('flowsheet', patient_id=selected_patient.id) }}">
+            📈 Flowsheet
+        </a>
+    </div>
+</div>
+{% endif %}
+
+<div class="container">
+
+    {% if alerts %}
+        <div class="alert-section">
+            <h3>Klinische Warnungen</h3>
+            {% for a in alerts %}
+                <div class="alert-box {{ a.severity }}">
+                    <strong>{{ a.severity | upper }}</strong>: {{ a.alert }}
+                    <div class="alert-time">{{ a["created_at"].replace("T", " ") }}</div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <h2>Aufgaben nach Patient</h2>
+
+    <!-- ========= AI-PFLEGEAUFGABEN ========= -->
+    <section class="section-card">
+        <h3>Pflegeaufgaben</h3>
+
+        <!-- Offene AI-Aufgaben -->
+        <h4>Offen</h4>
+        {% if ai_tasks_open %}
+            <div class="table-wrapper">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Patient</th>
+                            <th>Aufgabe</th>
+                            <th>Fällig</th>
+                            <th>Erledigt</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for t in ai_tasks_open %}
+                        <tr>
+                            <td>{{ t.patient_name }} ({{ t.patient_identifier }})</td>
+                            <td>{{ t.description }}</td>
+                            <td>{{ t.due_time .replace("T", " ") or "Nächste Schicht" }}</td>
+                            <td class="cell-center">
+                                <form method="POST" action="{{ url_for('toggle_task', task_id=t.id, task_type='ai') }}">
+                                    <input type="checkbox" name="done" onchange="this.form.submit()">
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p><em>Keine offenen Aufgaben.</em></p>
+        {% endif %}
+
+        <!-- Erledigte AI-Aufgaben -->
+        <h4>Erledigt</h4>
+        {% if ai_tasks_done %}
+            <div class="table-wrapper">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Patient</th>
+                            <th>Aufgabe</th>
+                            <th>Fällig</th>
+                            <th>Erledigt</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for t in ai_tasks_done %}
+                        <tr class="task-completed">
+                            <td>{{ t.patient_name }} ({{ t.patient_identifier }})</td>
+                            <td>{{ t.description }}</td>
+                            <td>{{ t.due_time .replace("T", " ") or "Nächste Schicht" }}</td>
+                            <td class="cell-center">
+                                <form method="POST" action="{{ url_for('toggle_task', task_id=t.id, task_type='ai') }}">
+                                    <input type="checkbox" name="done" onchange="this.form.submit()" checked>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p><em>Noch keine erledigten Aufgaben.</em></p>
+        {% endif %}
+    </section>
+
+    <!-- ========= ÄRZTLICHE ANORDNUNGEN ========= -->
+    <section class="section-card">
+        <h3>Ärztliche Anordnungen</h3>
+
+        <h4>Offen</h4>
+        {% if orders_open %}
+            <div class="table-wrapper">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Patient</th>
+                            <th>Anordnung</th>
+                            <th>Fällig</th>
+                            <th>Erledigt</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for o in orders_open %}
+                        <tr>
+                            <td>{{ o["patient_name"] }} ({{ o["patient_identifier"] }})</td>
+                            <td>{{ o["description"] }}</td>
+                            <td>{{ o["due_date"].replace("T", " ") or "—" }}</td>
+                            <td>
+                                <form method="POST" action="{{ url_for('toggle_task', task_id=o['id'], task_type='order') }}">
+                                    <input type="checkbox" onchange="this.form.submit()">
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p><em>Keine offenen Anordnungen.</em></p>
+        {% endif %}
+
+        <h4>Erledigt</h4>
+        {% if orders_done %}
+            <div class="table-wrapper">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Patient</th>
+                            <th>Anordnung</th>
+                            <th>Fällig</th>
+                            <th>Erledigt</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for o in orders_done %}
+                        <tr class="task-completed">
+                            <td>{{ o["patient_name"] }} ({{ o["patient_identifier"] }})</td>
+                            <td>{{ o["description"] }}</td>
+                            <td>{{ o["due_date"].replace("T", " ") or "—" }}</td>
+                            <td>
+                                <form method="POST" action="{{ url_for('toggle_task', task_id=o['id'], task_type='order') }}">
+                                    <input type="checkbox" onchange="this.form.submit()" checked>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p><em>Noch keine erledigten Anordnungen.</em></p>
+        {% endif %}
+    </section>
+
+    <!-- ========= MEDIKAMENTENGABEN – offen ========= -->
+<section class="section-card">
+    <h3>Medikamentengaben</h3>
+    <h4>Offen</h4>
+    {% if meds_open %}
+    <div class="table-wrapper">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Patient</th>
+                    <th>Medikament</th>
+                    <th>Applikationsweg</th>
+                    <th>Nächste Gabe</th>
+                    <th class="cell-center">Gegeben</th>
+                    <th class="cell-center">Nicht gegeben</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for m in meds_open %}
+                <tr>
+                    <td>{{ m["patient_name"] }} ({{ m["patient_identifier"] }})</td>
+                    <td>{{ m["name"] }} {{ m["dose"] }}</td>
+                    <td>{{ m["route"] }}</td>
+                    <td>{{ m["next_due"].replace("T", " ") or "—" }}</td>
+                    <td class="cell-center">
+                <!-- GEGEBEN -->
+                <form method="POST"
+                      action="{{ url_for('toggle_task', task_id=m['id'], task_type='med') }}">
+                    <input type="hidden" name="action" value="given">
+                    <label class="med-toggle-label">
+                        <input type="checkbox" onchange="this.form.submit()">
+                    </label>
+                </form>
+                        </td>
+                <td class="cell-center">
+                <!-- NICHT GEGEBEN -->
+                <form method="POST"
+                      action="{{ url_for('toggle_task', task_id=m['id'], task_type='med') }}">
+                    <input type="hidden" name="action" value="not_given">
+                    <label class="med-toggle-label">
+                        <input type="checkbox" onchange="this.form.submit()">
+                        </label>
+                    </form>
+            </td>
+
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+    </div>
+        {% else %}
+            <p>Keine offenen Medikamentengaben.</p>
+        {% endif %}
+
+    <br>
+
+<!-- ========= MEDS DONE ========= -->
+    <h3>Medikamentengaben</h3>
+    <h4>Erledigt</h4>
+    {% if meds_done %}
+    <div class="table-wrapper">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Patient</th>
+                    <th>Medikament</th>
+                    <th>Applikationsweg</th>
+                    <th>Letzte Gabe</th>
+                    <th>Von</th>
+                    <th class="cell-center">Gegeben</th>
+                    <th class="cell-center">Nicht gegeben</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for m in meds_done %}
+                <tr class="task-completed">
+                    <td>{{ m["patient_name"] }} ({{ m["patient_identifier"] }})</td>
+                    <td>{{ m["name"] }} {{ m["dose"] }}</td>
+                    <td>{{ m["route"] }}</td>
+                    <td>{{ m["last_given_at"] or "—" }}</td>
+                    <td>{{ m["last_given_by"] or "—" }}</td>
+                   <td class="cell-center">
+                    <!-- GEGEBEN -->
+                        <form method="POST" action="{{ url_for('toggle_task', task_id=m['id'], task_type='med') }}">
+                            <input type="hidden" name="action" value="given">
+                            <label class="med-toggle-label">
+                            <input type="checkbox"
+                                       {% if m['given'] %}checked{% endif %}
+                                       onchange="this.form.submit()">
+                            </label>
+                        </form>
+                    </td>
+                    <td class="cell-center">
+        <!-- NICHT GEGEBEN -->
+        <form method="POST"
+              action="{{ url_for('toggle_task', task_id=m['id'], task_type='med') }}">
+            <input type="hidden" name="action" value="not_given">
+            <label class="med-toggle-label">
+                <input type="checkbox"
+                       {% if m['not_given'] %}checked{% endif %}
+                       onchange="this.form.submit()">
+            </label>
+                            </form>
+                    </td>
+
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+    </div>
+        </section>
+        {% else %}
+            <p>Noch keine dokumentierten Medikamentengaben.</p>
+        {% endif %}
+
+</div>
+
+<script>
+async function fetchAlerts() {
+    try {
+        const response = await fetch("{{ url_for('api_alerts') }}");
+        if (!response.ok) {
+            console.error("Alert API error", response.status);
+            return;
+        }
+        const alerts = await response.json();
+        renderAlerts(alerts);
+    } catch (err) {
+        console.error("Alert fetch failed", err);
+    }
+}
+
+function renderAlerts(alerts) {
+    let box = document.getElementById("global-alert-box");
+
+    if (!box) {
+        box = document.createElement("div");
+        box.id = "global-alert-box";
+        box.className = "alert-container";
+        document.body.appendChild(box);
+    }
+
+    if (!alerts || alerts.length === 0) {
+        box.innerHTML = "";
+        box.style.display = "none";
+        return;
+    }
+
+    box.style.display = "block";
+
+    box.innerHTML = `
+        ${alerts.map(a => {
+            const sevClass =
+                a.severity === "high" ? "alert-high" :
+                a.severity === "medium" ? "alert-medium" :
+                "alert-low";
+
+            return `
+                <div class="alert ${sevClass}">
+                    <button class="alert-close" onclick="closeGlobalAlert()">✖</button>
+                    <strong>${a.type}</strong>
+                    <div>${a.patient_name} (${a.patient_identifier})</div>
+                    <div>${a.message}</div>
+                </div>
+            `;
+        }).join("")}
+    `;
+}
+
+function closeGlobalAlert() {
+    const box = document.getElementById("global-alert-box");
+    box.classList.add("fade-out");
+    setTimeout(() => {
+        box.style.display = "none";
+        box.classList.remove("fade-out");
+    }, 400);
+}
+
+fetchAlerts();
+setInterval(fetchAlerts, 60000);
+</script>
+
+</body>
+</html>
+
+
+
+
+

@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>EHR Mock – Patientenübersicht</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+
+<div class="header">
+    <div class="header-title">
+        <span class="icon">🏥</span>
+        <span>EHR Kardio – Station</span>
+    </div>
+    <div class="nav-links">
+        {% if current_nurse %}
+            <span class="current-nurse-label">
+                👩‍⚕️ Eingeloggt als: {{ current_nurse["name"] }}
+            </span>
+        {% endif %}
+        <a href="{{ url_for('logout') }}">🚪 Abmelden</a>
+        <a href="{{ url_for('tasks_view') }}">✅ Alle Aufgaben</a>
+    </div>
+</div>
+
+
+<div class="container">
+
+    <h2>Patientenübersicht</h2>
+
+ {% for p in patients %}
+    <div class="patient-card-horizontal">
+
+        <!-- LEFT: Patient identity -->
+        <div class="patient-left">
+            <!-- Avatar wrapper (photo OR emoji) -->
+            <div class="patient-avatar-wrapper">
+                {% if p.photo_filename %}
+                    <img src="{{ url_for('static', filename='uploads/' ~ p.photo_filename) }}"
+                         alt="Patientenfoto"
+                         class="patient-avatar-img">
+                {% else %}
+                    <div class="patient-avatar-large">
+                        {% if p.gender == 'F' %}
+                            👩
+                        {% elif p.gender == 'M' %}
+                            👨
+                        {% else %}
+                            🙂
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="patient-name-block">
+                <a href="{{ url_for('patient_detail', patient_id=p.id) }}" class="patient-name">
+                    {{ p.name }}
+                </a>
+
+                <div class="patient-room">
+                    Patienten-ID: {{ p.patient_identifier }}
+                </div>
+
+                <div class="badge-allergy">
+                    Allergien: {{ p.allergies or "keine" }}
+                </div>
+
+                <div class="badge-code">
+                    Code-Status: {{ p.code_status or "nicht festgelegt" }}
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT: Clinical info + buttons + AI priorities -->
+        <div class="patient-right">
+            <!-- Row 1: Diagnose | DOB -->
+            <div><strong>Diagnose:</strong> {{ p.diagnosis or "—" }}</div>
+            <div><strong>Geburtsdatum:</strong> {{ p.dob or "—" }}</div>
+
+            <!-- Row 2: Primärarzt | Pflege -->
+            <div><strong>Primärarzt:</strong> {{ p.primary_doctor or "—" }}</div>
+            <div><strong>Bezugspflegeperson:</strong> {{ p.bezugspflege_name or "—" }}</div>
+
+            <!-- Row 3: Aufnahme | Entlassung -->
+            <div><strong>Aufnahme:</strong> {{ p.admission_date or "—" }}</div>
+            <div><strong>Entlassung:</strong> {{ p.expected_discharge or "—" }}</div>
+
+            <!-- Row 4: Flowsheet / Aufgaben / Labs / Prioritäten -->
+            <div class="patient-actions-row" style="grid-column: 1 / span 2;">
+                <a class="btn-primary"
+                   href="{{ url_for('flowsheet', patient_id=p.id) }}">
+                    Flowsheet
+                </a>
+                <a class="btn-secondary"
+                   href="{{ url_for('labs_view', patient_id=p.id) }}">
+                    Labs
+                </a>
+                <a class="btn-secondary"
+                   href="{{ url_for('tasks_view', patient_id=p.id) }}">
+                    Aufgaben
+                </a>
+
+                <div class="priority-box">
+                    <strong>Prioritäten</strong>
+                    {% set prios = priorities.get(p.id) %}
+                    {% if prios %}
+                        <ul>
+                            {% for pr in prios %}
+                                <li>{{ pr }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <span class="priority-empty">Noch keine Bewertung</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+    </div>
+{% endfor %}
+
+</div>
+
+<script>
+async function fetchAlerts() {
+    try {
+        const response = await fetch("{{ url_for('api_alerts') }}");
+        if (!response.ok) {
+            console.error("Alert API error", response.status);
+            return;
+        }
+        const alerts = await response.json();
+        renderAlerts(alerts);
+    } catch (err) {
+        console.error("Alert fetch failed", err);
+    }
+}
+
+function renderAlerts(alerts) {
+    let box = document.getElementById("global-alert-box");
+
+    // Create alert box only once
+    if (!box) {
+        box = document.createElement("div");
+        box.id = "global-alert-box";
+        box.className = "alert-container";
+        document.body.appendChild(box);
+    }
+
+    // No alerts → hide box
+    if (!alerts || alerts.length === 0) {
+        box.innerHTML = "";
+        box.style.display = "none";
+        return;
+    }
+
+    box.style.display = "block";
+
+    // Build alerts list with close button
+    box.innerHTML = `
+        ${alerts.map(a => {
+            const sevClass =
+                a.severity === "high" ? "alert-high" :
+                a.severity === "medium" ? "alert-medium" :
+                "alert-low";
+
+            return `
+                <div class="alert ${sevClass}">
+                <button class="alert-close" onclick="closeGlobalAlert()">✖</button>
+                    <strong>${a.type}</strong>
+                    <div>${a.patient_name} (${a.patient_identifier})</div>
+                    <div>${a.message}</div>
+                </div>
+            `;
+        }).join("")}
+    `;
+}
+
+// Close function with fade-out animation
+function closeGlobalAlert() {
+    const box = document.getElementById("global-alert-box");
+    box.classList.add("fade-out");
+
+    setTimeout(() => {
+        box.style.display = "none";
+        box.classList.remove("fade-out");
+    }, 400); // matches animation duration
+}
+
+// Initial load + refresh
+fetchAlerts();
+setInterval(fetchAlerts, 60000);
+</script>
+
+
+</body>
+</html>
+
+
