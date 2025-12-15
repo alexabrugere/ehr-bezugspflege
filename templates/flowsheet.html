@@ -42,13 +42,12 @@
 {% endif %}
 
 
-    <h1>Flowsheet – {{ patient.name }}</h1>
-    <a class="back-link" href="{{ url_for('patient_detail', patient_id=patient.id) }}">← Zurück zum Patienten</a>
+    <h2>Flowsheet – {{ patient.name }}</h2>
 
     <hr><br>
 
     <!-- ================= LAST 5 ASSESSMENTS (VITALS – HORIZONTAL TABLE) ================= -->
-   <h2>Letzte 5 Einschätzungen (Vitalzeichen)</h2>
+   <h2>Letzte 5 Einschätzungen</h2>
 
 {% if recent_assessments %}
 <div class="vitals-history-card">
@@ -133,6 +132,100 @@
                     {% endfor %}
                 </tr>
 
+            </tbody>
+    </table>
+</div>
+{% else %}
+    <p>Noch keine Einschätzungen vorhanden.</p>
+{% endif %}
+
+
+            {% if recent_assessments %}
+<div class="vitals-history-card">
+    <table class="vitals-history-table">
+        <thead>
+            <tr>
+                <th>Parameter</th>
+                {% for a in recent_assessments %}
+                    <th>{{ a["created_at"].replace("T", " ") }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+
+                <tr>
+                    <td>Schmerzen</td>
+                    {% for a in recent_assessments %}
+                        <td>
+                            {% if a.pain is not none %}
+                                <span class="vital-chip {% if a.pain > 6 %}vital-high{% endif %}">
+                                    {{ a.pain }}
+                                </span>
+                            {% else %}–{% endif %}
+                        </td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>Gewicht</td>
+                    {% for a in recent_assessments %}
+                        <td>
+                            {% if a.weight is not none %}
+                                <span class="vital-chip {% if a.weight > 90 %}vital-high{% endif %}">
+                                    {{ a.weight }}
+                                </span>
+                            {% else %}–{% endif %}
+                        </td>
+                    {% endfor %}
+                </tr>
+                 <tr>
+                    <td>Mobilität</td>
+                    {% for a in recent_assessments %}
+                        <td>
+                            {% if a.mobility is not none %}
+                                <span class="vital-chip {% if a.mobility < 3 %}vital-high{% endif %}">
+                                    {{ a.mobility }}
+                                </span>
+                            {% else %}–{% endif %}
+                        </td>
+                    {% endfor %}
+                </tr>
+                 <tr>
+                    <td>Ödem</td>
+                    {% for a in recent_assessments %}
+                        <td>
+                            {% if a.edema is not none %}
+                                <span class="vital-chip {% if a.edema > 8 %}vital-high{% endif %}">
+                                    {{ a.edema }}
+                                </span>
+                            {% else %}–{% endif %}
+                        </td>
+                    {% endfor %}
+                </tr>
+                 <tr>
+                    <td>Verwirrtheit</td>
+                    {% for a in recent_assessments %}
+                        <td>
+                            {% if a.confusion is not none %}
+                                <span class="vital-chip {% if a.confusion > 8 %}vital-high{% endif %}">
+                                    {{ a.confusion }}
+                                </span>
+                            {% else %}–{% endif %}
+                        </td>
+                    {% endfor %}
+                </tr>
+                 <tr>
+                    <td>Ernährung</td>
+                    {% for a in recent_assessments %}
+                        <td>
+                            {% if a.nutrition is not none %}
+                                <span class="vital-chip {% if a.nutrition < 4 %}vital-high{% endif %}">
+                                    {{ a.nutrition }}
+                                </span>
+                            {% else %}–{% endif %}
+                        </td>
+                    {% endfor %}
+                </tr>
+
         </tbody>
     </table>
 </div>
@@ -144,12 +237,11 @@
     <br><hr><br>
 
     <!-- ================= FLOWSHEET ENTRY FORM ================= -->
-    <h2>Neue Einschätzung dokumentieren</h2>
+    <h2>Neue Einschätzung hier oder mit dem Messungsgerät dokumentieren </h2>
 
     <form action="{{ url_for('flowsheet', patient_id=patient.id) }}" method="POST">
 
         <!-- -------- VITALS: HORIZONTAL GRID -------- -->
-        <h3>Vitalzeichen</h3>
         <div class="table-wrapper vitals-card">
         <div class="table-wrapper vitals-grid">
              <label><span class="vital-label">Atemfrequenz</span>
@@ -170,234 +262,40 @@
             <label><span class="vital-label">RR diastolisch</span>
                 <input type="number" name="diastolic_bp" min="20" max="150">
             </label>
+
+
+             <label><span class="vital-label">Schmerzen</span>
+                <input type="number" name="pain" min=0 max="10">
+            </label>
+            <label><span class="vital-label">Gewicht</span>
+                <input type="number" name="weight" min=0 max="300">
+            </label>
+             <label><span class="vital-label">Mobilität</span>
+                <input type="number" name="mobility" min=0 max="10">
+            </label>
+            <label><span class="vital-label">Ödem</span>
+                <input type="number" name="edema" min=0 max="10">
+            </label>
+            <label><span class="vital-label">Verwirrtheit</span>
+                <input type="number" name="confusion" min=0 max=10>
+            </label>
+            <label><span class="vital-label">Ernährung</span>
+                <input type="number" name="nutrition" min=0 max="10">
+            </label>
         </div>
             </div>
 
-        <br><hr><br>
 
-        <!-- -------- BODY SYSTEMS: VERTICAL DOCUMENTATION -------- -->
-<h3>Körperliche Einschätzung</h3>
-
-<!-- WNL BUTTON -->
-<p>
-    <button type="button" class="btn-secondary" onclick="setWNL()">
-        Alle Systeme WNL eintragen
-    </button>
-</p>
-
-<div class="table-wrapper flowsheet-body-wrapper">
-    <table class="flowsheet-table flowsheet-table-vertical">
-
-        {# letze 3 Einschätzungen vorbereiten #}
-        {% set last_three = recent_assessments[:3] if recent_assessments else [] %}
-
-        <thead>
-            <tr>
-                <th>System</th>
-                {% for a in last_three %}
-                    <th>{{ a["created_at"].replace("T", " ") }}</th>
-                {% endfor %}
-                <th>Neue Dokumentation</th>
-            </tr>
-        </thead>
-
-        <tbody>
-        {% if last_three %}
-            <!-- HAUT -->
-            <tr>
-                <td class="system-label">Haut</td>
-                {% for a in last_three %}
-                    <td class="note-author">{{ a["skin"] or "NA" }}~{{ a.author }}</td>
-                {% endfor %}
-                <td>
-                    <textarea name="skin" rows="2" class="flowsheet-input"></textarea>
-                </td>
-            </tr>
-
-            <!-- HERZ-KREISLAUF -->
-            <tr>
-                <td class="system-label">Herz-Kreislauf</td>
-                {% for a in last_three %}
-                    <td class="note-author">{{ a["cardiac"] or "NA" }}~{{ a.author }}</td>
-                {% endfor %}
-                <td>
-                    <textarea name="cardiac" rows="2" class="flowsheet-input"></textarea>
-                </td>
-            </tr>
-
-            <!-- ATMUNG -->
-            <tr>
-                <td class="system-label">Atmung</td>
-                {% for a in last_three %}
-                    <td class="note-author">{{ a["respiratory"] or "NA" }}~{{ a.author }}</td>
-                {% endfor %}
-                <td>
-                    <textarea name="respiratory" rows="2" class="flowsheet-input"></textarea>
-                </td>
-            </tr>
-
-            <!-- ENDOKRIN -->
-            <tr>
-                <td class="system-label">Endokrin</td>
-                {% for a in last_three %}
-                    <td class="note-author">{{ a["endocrine"] or "NA" }}~{{ a.author }}</td>
-                {% endfor %}
-                <td>
-                    <textarea name="endocrine" rows="2" class="flowsheet-input"></textarea>
-                </td>
-            </tr>
-
-            <!-- LYMPHSYSTEM -->
-            <tr>
-                <td class="system-label">Lymphsystem</td>
-                {% for a in last_three %}
-                    <td class="note-author">{{ a["lymphatic"] or "NA" }}~{{ a.author }}</td>
-                {% endfor %}
-                <td>
-                    <textarea name="lymphatic" rows="2" class="flowsheet-input"></textarea>
-                </td>
-            </tr>
-
-            <!-- BEWEGUNGSAPPARAT -->
-            <tr>
-                <td class="system-label">Bewegungsapparat</td>
-                {% for a in last_three %}
-                    <td class="note-author">{{ a["musculoskeletal"] or "NA" }}~{{ a.author }}</td>
-                {% endfor %}
-                <td>
-                    <textarea name="musculoskeletal" rows="2" class="flowsheet-input"></textarea>
-                </td>
-            </tr>
-
-            <!-- NEUROLOGISCH -->
-            <tr>
-                <td class="system-label">Neurologisch</td>
-                {% for a in last_three %}
-                    <td class="note-author">{{ a["neuro"] or "NA" }}~{{ a.author }}</td>
-                {% endfor %}
-                <td>
-                    <textarea name="neuro" rows="2" class="flowsheet-input"></textarea>
-                </td>
-            </tr>
-
-            <!-- MAGEN-DARM -->
-            <tr>
-                <td class="system-label">Magen-Darm</td>
-                {% for a in last_three %}
-                    <td class="note-author">{{ a["gastro"] or "NA" }}~{{ a.author }}</td>
-                {% endfor %}
-                <td>
-                    <textarea name="gastro" rows="2" class="flowsheet-input"></textarea>
-                </td>
-            </tr>
-
-            <!-- SONSTIGES -->
-            <tr>
-                <td class="system-label">Weitere Beobachtungen</td>
-                {% for a in last_three %}
-                    <td class="note-author">{{ a["other_notes"] or "NA" }}~{{ a.author }}</td>
-                {% endfor %}
-                <td>
-                    <textarea name="other_notes" rows="3" class="flowsheet-input"></textarea>
-                </td>
-            </tr>
-        {% else %}
-            <tr>
-                <td colspan="2">
-                    <em>Noch keine körperlichen Einschätzungen dokumentiert.</em>
-                </td>
-            </tr>
-
-            <!-- Nur neue Dokumentation, falls noch keine Historie -->
-            <tr>
-                <td class="system-label">Haut</td>
-                <td>
-                    <textarea id="skin" name="skin" rows="2" class="flowsheet-input"></textarea>
-                </td>
-            </tr>
-            <tr>
-                <td class="system-label">Herz-Kreislauf</td>
-                <td>
-                    <textarea id="cardiac" name="cardiac" rows="2" class="flowsheet-input"></textarea>
-                </td>
-            </tr>
-            <tr>
-                <td class="system-label">Atmung</td>
-                <td>
-                    <textarea id="respiratory" name="respiratory" rows="2" class="flowsheet-input"></textarea>
-                </td>
-            </tr>
-            <tr>
-                <td class="system-label">Endokrin</td>
-                <td>
-                    <textarea id="endocrine" name="endocrine" rows="2" class="flowsheet-input"></textarea>
-                </td>
-            </tr>
-             <tr>
-                 <td class="system-label">Lymphsystem</td>
-                <td>
-                    <textarea id="lymphatic" name="lymphatic" rows="2" class="flowsheet-input"></textarea>
-                </td>
-            </tr>
-            <tr>
-                <td class="system-label">Bewegungsapparat</td>
-                <td>
-                    <textarea id="musculoskeletal" name="musculoskeletal" rows="2" class="flowsheet-input"></textarea>
-                </td>
-            </tr>
-             <tr>
-                <td class="system-label">Neurologisch</td>
-                <td>
-                    <textarea id="neuro" name="neuro" rows="2" class="flowsheet-input"></textarea>
-                </td>
-            </tr>
-            <tr>
-                <td class="system-label">Magen-Darm</td>
-                <td>
-                    <textarea id="gastro" name="gastro" rows="2" class="flowsheet-input"></textarea>
-                </td>
-            </tr>
-            <tr>
-                <td class="system-label">Weitere Beobachtungen</td>
-                <td>
-                    <textarea id="other_notes" name="other_notes" rows="2" class="flowsheet-input"></textarea>
-                </td>
-            </tr>
-        {% endif %}
-        </tbody>
-    </table>
-</div>
-
-<button type="submit" class="btn-primary">Einschätzung speichern</button>
-
-    </form>
 
     <br><hr><br>
 
-</div>
 
-<!-- ============ WNL JAVASCRIPT ============ -->
-<script>
-function setWNL() {
-    const fields = [
-        "skin",
-        "cardiac",
-        "respiratory",
-        "endocrine",
-        "lymphatic",
-        "musculoskeletal",
-        "neuro",
-        "gastro"
-    ];
+<button type="submit" class="btn-primary">Einschätzung speichern</button>
 
-    fields.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) {
-            el.value = "WNL";
-        }
-    });
-}
-</script>
+
+   </form>
+
+    </div>
 
 <!-- ============ ALERT JAVASCRIPT (unchanged) ============ -->
 <script>

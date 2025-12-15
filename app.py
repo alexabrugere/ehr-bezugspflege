@@ -161,6 +161,34 @@ def get_default_interval_hours(description: str) -> int:
     # default if nothing specific
     return 4
 
+# ---------------------------------------------------------
+# Voice documentation phrase → task mapping
+# ---------------------------------------------------------
+def map_spoken_phrase_to_task(text: str) -> str | None:
+    t = text.lower()
+
+    mappings = {
+        "teilgewaschen": "Patient teilgewaschen",
+        "ganzgewaschen": "Patient ganzgewaschen",
+        "inhaliert": "Inhalation durchgeführt",
+        "urin geleert": "Urinflasche geleert",
+        "gelagert": "Lagerung alle 2h dokumentieren",
+        "mobilisiert" :"Mobilisation nach Standard",
+        "zähne geputzt": "Zahnpflege durchgeführt",
+        "essen": "Beim Essen geholfen",
+        "informiert": "Patient informiert / aufgeklärt",
+        "op geprüft": "Postoperative Kontrolle durchgeführt",
+        "hochlagert" : "Oberkörperhochlagerung, atemerleichternde Positionierung",
+        "orientiert" : "Orientierungshilfen (Kalender, Uhr, Angehörige) bereitstellen",
+    }
+
+    for key, task in mappings.items():
+        if key in t:
+            return task
+
+    return None
+
+
 def generate_priorities_and_tasks(conn, patient_id: int) -> None:
     """
     Rule-based 'mini AI':
@@ -186,8 +214,6 @@ def generate_priorities_and_tasks(conn, patient_id: int) -> None:
     problems = []
 
     # Symptom scales
-    if a["breathlessness"] is not None and a["breathlessness"] >= 7:
-        problems.append("Atemnot / eingeschränkter Gasaustausch")
     if a["pain"] is not None and a["pain"] >= 7:
         problems.append("Starke Schmerzen")
     if a["mobility"] is not None and a["mobility"] <= 3:
@@ -218,42 +244,48 @@ def generate_priorities_and_tasks(conn, patient_id: int) -> None:
             VALUES (?, ?, ?);
         """, (patient_id, rank, prob))
 
-    # Clear old AI tasks
-    cur.execute("DELETE FROM ai_tasks WHERE patient_id = ?;", (patient_id,))
 
     for prob in problems:
         if "Atemnot" in prob or "Hypoxie" in prob:
             task_descriptions = [
-                "SpO₂ & AF alle 2h dokumentieren",
+                "Vitalzeichenkontrolle 2h dokumentieren",
                 "Oberkörperhochlagerung, atemerleichternde Positionierung",
             ]
         elif "Schmerzen" in prob:
             task_descriptions = [
                 "Schmerzskala alle 4h erheben",
-                "Wirkung der Analgesie nach 30–60 min evaluieren",
             ]
         elif "Sturz" in prob or "Dekubitus" in prob:
             task_descriptions = [
-                "Lagerungswechsel alle 2h dokumentieren",
-                "Mobilisation nach Standard, Sturzrisiko einschätzen",
+                "Lagerung alle 2h dokumentieren",
+                "Sturzrisiko einschätzen",
             ]
         elif "Verwirrtheit" in prob:
             task_descriptions = [
                 "Orientierungshilfen (Kalender, Uhr, Angehörige) bereitstellen",
-                "Reizüberflutung vermeiden, Tag-/Nachtrhythmus unterstützen",
             ]
         elif "Hypotonie" in prob:
             task_descriptions = [
-                "RR & Puls alle 2h kontrollieren",
-                "Arzt informieren bei weiterem Abfall",
+                "Vitalzeichenkontrolle alle 2h kontrollieren",
             ]
         else:
-            task_descriptions = ["Vitalzeichenkontrolle nach Standard"]
+            task_descriptions = [
+                "Vitalzeichenkontrolle nach Standard",
+                "Schmerzen nach Standard nachfragen",
+            ]
 
         for desc in task_descriptions:
             interval_hours = get_default_interval_hours(desc)
             next_due = datetime.now() + timedelta(hours=interval_hours)
             next_due_str = next_due.isoformat(timespec="minutes")
+
+            # Clear old AI tasks
+            cur.execute("""
+                    DELETE FROM ai_tasks
+                    WHERE patient_id = ?
+                      AND completed = 0
+                      AND description = ?;
+                """, (patient_id, desc))
 
             cur.execute("""
                 INSERT INTO ai_tasks (patient_id, description, due_time, completed)
@@ -262,6 +294,7 @@ def generate_priorities_and_tasks(conn, patient_id: int) -> None:
 
     generate_ai_alerts(conn, patient_id)
     conn.commit()
+
 
 def compute_patient_alerts():
     """
@@ -439,6 +472,7 @@ def flowsheet(patient_id):
         systolic_bp = to_int("systolic_bp")
         diastolic_bp = to_int("diastolic_bp")
         oxygen_sat = to_int("oxygen_sat")
+        weight = to_int("weight")
 
         temperature = safe_range(temperature, 25, 45)
         heart_rate = safe_range(heart_rate, 0, 250)
@@ -446,10 +480,11 @@ def flowsheet(patient_id):
         systolic_bp = safe_range(systolic_bp, 40, 250)
         diastolic_bp = safe_range(diastolic_bp, 20, 150)
         oxygen_sat = safe_range(oxygen_sat, 50, 100)
+        weight = safe_range(weight, 50, 100)
+
 
         # Scales
         pain = to_int("pain")
-        breathlessness = to_int("breathlessness")
         mobility = to_int("mobility")
         edema = to_int("edema")
         confusion = to_int("confusion")
@@ -471,7 +506,7 @@ def flowsheet(patient_id):
                 patient_id, created_at, author,
                 temperature, heart_rate, respiration_rate,
                 systolic_bp, diastolic_bp, oxygen_sat,
-                pain, breathlessness, mobility, edema, confusion, nutrition,
+                pain, weight, mobility, edema, confusion, nutrition,
                 skin, cardiac, respiratory, endocrine, lymphatic,
                 musculoskeletal, neuro, gastro, other_notes
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -480,10 +515,45 @@ def flowsheet(patient_id):
             get_current_nurse(conn)["name"] if get_current_nurse(conn) else "unbekannt",
             temperature, heart_rate, respiration_rate,
             systolic_bp, diastolic_bp,oxygen_sat,
-            pain, breathlessness, mobility, edema, confusion, nutrition,
+            pain, weight, mobility, edema, confusion, nutrition,
             skin, cardiac, respiratory, endocrine, lymphatic,
             musculoskeletal, neuro, gastro, notes
         ))
+
+        cur.execute("""
+               UPDATE ai_tasks
+               SET completed = 1
+               WHERE patient_id = ?
+                 AND description LIKE '%Vitalzeichen%';
+           """, (patient_id,))
+
+        cur.execute("""
+               UPDATE ai_tasks
+               SET completed = 1
+               WHERE patient_id = ?
+                 AND description LIKE '%Schmerz%';
+           """, (patient_id,))
+
+        cur.execute("""
+               UPDATE ai_tasks
+               SET completed = 1
+               WHERE patient_id = ?
+                 AND description LIKE '%Sturzrisiko%';
+           """, (patient_id,))
+
+        cur.execute("""
+              UPDATE ai_tasks
+              SET completed = 1
+              WHERE patient_id = ?
+                AND description LIKE '%Orientierungshilfen%';
+          """, (patient_id,))
+
+        cur.execute("""
+              UPDATE ai_tasks
+              SET completed = 1
+              WHERE patient_id = ?
+                AND description LIKE '%Oberkörperhochlagerung%';
+          """, (patient_id,))
 
         # 🔴 Write wichtige Beobachtungen auch als pflegerische Notiz
         # write important flowsheet notes into nurse_notes
@@ -1322,6 +1392,63 @@ def logout():
 
     # Redirect back to login page
     return redirect(url_for("select_nurse"))
+
+
+@app.route("/voice-doc", methods=["GET", "POST"])
+def voice_doc():
+    if "current_nurse_id" not in session:
+        return redirect(url_for("select_nurse"))
+
+    conn = get_connection()
+    cur = conn.cursor()
+    current_nurse = get_current_nurse(conn)
+    author = current_nurse["name"] if current_nurse else "Sprachdokumentation"
+
+    if request.method == "POST":
+        patient_identifier = request.form.get("patient_identifier")
+        spoken_text = request.form.get("spoken_text", "")
+
+        # find patient
+        cur.execute(
+            "SELECT id FROM patients WHERE patient_identifier = ?;",
+            (patient_identifier,)
+        )
+        patient = cur.fetchone()
+
+        if patient:
+            task_desc = map_spoken_phrase_to_task(spoken_text)
+
+            if task_desc:
+                # insert as completed task
+                cur.execute("""
+                    INSERT INTO ai_tasks (patient_id, description, due_time, completed)
+                    VALUES (?, ?, ?, 1);
+                """, (
+                    patient["id"],
+                    task_desc,
+                    datetime.now().isoformat(timespec="minutes"),
+                ))
+
+            observation = request.form.get("observation_text")
+            if observation and observation.strip():
+                cur.execute("""
+                    INSERT INTO nurse_notes (patient_id, note, created_at, author)
+                    VALUES (?, ?, ?, ?);
+                """, (
+                    patient["id"],
+                    observation.strip(),
+                    datetime.now().strftime("%Y-%m-%d %H:%M"),
+                    author,
+                ))
+
+                conn.commit()
+
+        conn.close()
+        return redirect(url_for("tasks_view", patient_id=patient["id"]))
+
+    conn.close()
+    return render_template("voice_doc.html")
+
 
 
 

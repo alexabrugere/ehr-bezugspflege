@@ -19,6 +19,7 @@
                 👩‍⚕️ Eingeloggt als: {{ current_nurse["name"] }}
             </span>
         {% endif %}
+        <a href="{{ url_for('voice_doc') }}" class="btn-secondary">🎤 Sprachdokumentation</a>
         <a href="{{ url_for('logout') }}">🚪 Logout</a>
         <a href="{{ url_for('home') }}">🧑‍⚕️ Alle Patienten</a>
     </div>

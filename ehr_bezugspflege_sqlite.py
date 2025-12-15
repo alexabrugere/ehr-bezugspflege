@@ -149,10 +149,10 @@ CREATE TABLE assessments (
     systolic_bp INTEGER,
     diastolic_bp INTEGER,
     oxygen_sat INTEGER,
+    weight INTEGER,
 
     -- Symptom / risk scales
     pain INTEGER,
-    breathlessness INTEGER,
     mobility INTEGER,
     edema INTEGER,
     confusion INTEGER,
@@ -172,8 +172,6 @@ CREATE TABLE assessments (
     FOREIGN KEY (patient_id) REFERENCES patients(id)
 );
 """)
-
-
 
 # ---- AI priorities (top 3 problems per patient) ----
 cur.execute("""

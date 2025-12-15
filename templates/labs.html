@@ -43,12 +43,8 @@
 
     <h1>Laborübersicht</h1>
 
-    <p>
-        <a class="back-link" href="{{ url_for('home') }}">← Zurück zur Patientenübersicht</a>
-    </p>
-
     {% if patients|length == 1 %}
-        <h2>Patient: {{ patients[0]["name"] }} ({{ patients[0]["patient_identifier"] }})</h2>
+        <h2>{{ patients[0]["name"] }} ({{ patients[0]["patient_identifier"] }})</h2>
     {% else %}
         <h2>Alle Patienten</h2>
     {% endif %}
