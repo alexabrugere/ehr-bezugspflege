@@ -1,47 +1,59 @@
+
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <title>Login</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Pflegefachkraft auswählen</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
 
-<div class="header">
-    <div class="header-title">
-        <span class="icon">🏥</span>
+<div class="header header-mobile">
+  <div class="header-title">
+    <span class="icon">🏥</span>
         <span>EHR Kardio – Station</span>
         <span>Login</span>
-    </div>
+  </div>
+
+  <div class="nav-links">
+    {% if current_nurse %}
+      <a class="nav-pill" href="{{ url_for('logout') }}">Logout</a>
+    {% endif %}
+  </div>
 </div>
 
-<div class="container">
+<div class="container container-mobile">
 
+  <div class="section-card mobile-card">
     {% if current_nurse %}
-        <p>Aktuell eingeloggt als: <strong>{{ current_nurse["name"] }}</strong></p>
+      <div class="mobile-subtitle">
+        Aktuell eingeloggt als: <strong>{{ current_nurse["name"] }}</strong>
+      </div>
     {% else %}
-        <p>Bitte anmelden.</p>
+      <div class="mobile-subtitle">
+        Derzeit ist kein Pflegefachkraft eingeloggt.
+      </div>
     {% endif %}
 
- <form method="POST">
-        <label for="nurse_id"><strong>Pflegefachkraft:</strong></label>
-        <select name="nurse_id" id="nurse_id" required>
-            <option value="">– bitte wählen –</option>
+    <form method="POST" class="mobile-form">
+      <label class="mobile-label" for="nurse_id">Pflegefachkraft</label>
 
-            {% for n in nurses %}
-                {% set is_selected = current_nurse and current_nurse['id'] == n['id'] %}
-                <option value="{{ n['id'] }}">
-                    {{ n["name"] }}
-                </option>
-            {% endfor %}
-        </select>
+      <select name="nurse_id" id="nurse_id" class="mobile-input" required>
+        <option value="">– bitte wählen –</option>
+        {% for n in nurses %}
+          <option value="{{ n['id'] }}">
+            {{ n["name"] }}
+          </option>
+        {% endfor %}
+      </select>
 
-        <br><br>
-        <button type="submit" class="btn-primary">Als Pflegefachkraft einloggen</button>
+      <button type="submit" class="btn-primary btn-full">Einloggen</button>
+      <p class="mobile-hint">Tipp: Auf dem iPhone ist die Auswahl am bequemsten im Vollbild.</p>
     </form>
+  </div>
 
 </div>
 
 </body>
 </html>
-

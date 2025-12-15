@@ -176,10 +176,11 @@ def map_spoken_phrase_to_task(text: str) -> str | None:
         "mobilisiert" :"Mobilisation nach Standard",
         "zähne geputzt": "Zahnpflege durchgeführt",
         "essen": "Beim Essen geholfen",
-        "informiert": "Patient informiert / aufgeklärt",
+        "aufgeklärt": "Patient informiert / aufgeklärt",
         "op geprüft": "Postoperative Kontrolle durchgeführt",
         "hochlagert" : "Oberkörperhochlagerung, atemerleichternde Positionierung",
         "orientiert" : "Orientierungshilfen (Kalender, Uhr, Angehörige) bereitstellen",
+        "wunde" : "Wundbehandlung durchgeführt",
     }
 
     for key, task in mappings.items():

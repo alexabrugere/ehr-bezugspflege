@@ -1,32 +1,162 @@
-<div class="section-card">
-    <h3>Sprachdokumentation</h3>
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Sprachdokumentation</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
 
-    <form method="POST">
-        <label>Patienten-ID</label><br>
-        <input type="text" name="patient_identifier" required>
-
-        <br><br>
-
-        <label>Was wurde gemacht?</label><br>
-        <textarea name="spoken_text" rows="4"
-                  placeholder="z.B. Patient teilgewaschen"
-                  required></textarea>
-
-        <br><br>
-
-        <button class="btn-primary">Dokumentieren</button>
-    </form>
-
-    <form method="POST">
-        <label>Patienten-ID</label><br>
-        <input type="text" name="patient_identifier" required>
-
-        <br><br>
-
-                <label>Beobachtungen</label><br>
-                    <textarea name="observation_text" rows="4"></textarea>
-        <br><br>
-
-        <button class="btn-primary">Dokumentieren</button>
-    </form>
+<div class="header header-mobile">
+  <div class="header-title">
+    <span class="icon">🎙️</span>
+    <span>Sprachdokumentation</span>
+  </div>
+  <div class="nav-links">
+      {% if current_nurse %}
+            <span class="current-nurse-label">
+                👩‍⚕️ Eingeloggt als: {{ current_nurse["name"] }}
+            </span>
+        {% endif %}
+    <a class="nav-pill" href="{{ url_for('home') }}">🏥 Home</a>
+  </div>
 </div>
+
+<div class="container container-mobile">
+
+  <div class="section-card mobile-card">
+
+    <form method="POST" action="{{ url_for('voice_doc') }}" class="mobile-form">
+      <label class="mobile-label" for="patient_identifier">Patienten-ID</label>
+      <input
+        id="patient_identifier"
+        name="patient_identifier"
+        class="mobile-input"
+        inputmode="text"
+        placeholder="z.B. P-100001"
+        autocomplete="off"
+        required
+      />
+
+      <div class="mobile-row">
+        <button type="button" class="btn-secondary btn-full" onclick="fillPhrase('Patient teilgewaschen')">Teilwäsche</button>
+        <button type="button" class="btn-secondary btn-full" onclick="fillPhrase('Patient ganzgewaschen')">Ganzwäsche</button>
+      </div>
+
+      <div class="chip-grid">
+        <button type="button" class="chip" onclick="fillPhrase('Inhalation durchgeführt')">Inhalation</button>
+        <button type="button" class="chip" onclick="fillPhrase('Urinflasche geleert')">Urinflasche</button>
+        <button type="button" class="chip" onclick="fillPhrase('patient links gelagert')">Lagerung links</button>
+        <button type="button" class="chip" onclick="fillPhrase('patient rechts gelagert')">Lagerung rechts</button>
+        <button type="button" class="chip" onclick="fillPhrase('patient zähne geputzt')">Zähne geputzt</button>
+        <button type="button" class="chip" onclick="fillPhrase('patient geholfen beim Essen')">Essen geholfen</button>
+        <button type="button" class="chip" onclick="fillPhrase('Patient aufgeklärt')">Info erklärt</button>
+        <button type="button" class="chip" onclick="fillPhrase('Postop Kontrolle')">Post-OP Check</button>
+        <button type="button" class="chip" onclick="fillPhrase(Mobilisation')">Mobilisation</button>
+        <button type="button" class="chip" onclick="fillPhrase('Oberkörperhochlagerung')">Oberkörperhochlagerung</button>
+        <button type="button" class="chip" onclick="fillPhrase('Orientierungshilfen')">Orientierungshilfe</button>
+        <button type="button" class="chip" onclick="fillPhrase('Wundbehandlung')">Wundbehandlung</button>
+
+      </div>
+
+      <label class="mobile-label" for="spoken_text">Dokumentation nach Auswahl</label>
+      <textarea
+        id="spoken_text"
+        name="spoken_text"
+        class="mobile-textarea"
+        rows="4"
+        placeholder="Wählen Sie was aus: z.B. Lagerung links"
+      ></textarea>
+
+        <label class="mobile-label" for="observation_text">Beobachtung</label>
+        <textarea
+          id="observation_text"
+          name="observation_text"
+          class="mobile-textarea"
+          rows="3"
+          placeholder="Sprich oder tippe: z.B. 'Patient klagt über Übelkeit, Haut blass', …"
+        ></textarea>
+
+
+        <div class="mobile-row">
+        <button type="button" class="btn-primary btn-full" id="btnStart">🎙️ Start</button>
+        <button type="button" class="btn-secondary btn-full" id="btnStop" disabled>⏹️ Stop</button>
+      </div>
+
+      <button type="submit" class="btn-primary btn-full">Dokumentieren</button>
+
+      <p class="mobile-hint">
+        Hinweis: iPhone Safari benötigt <strong>HTTPS</strong> und eine Nutzeraktion (Button) für Mikrofonzugriff.
+      </p>
+    </form>
+  </div>
+
+</div>
+
+<script>
+function fillPhrase(text) {
+  const box = document.getElementById("spoken_text");
+  if (!box.value.trim()) box.value = text;
+  else box.value = box.value.trim() + "\n" + text;
+  box.focus();
+}
+
+/* --- Web Speech API (works on many browsers, iOS Safari support varies) --- */
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+let rec = null;
+
+const btnStart = document.getElementById("btnStart");
+const btnStop  = document.getElementById("btnStop");
+const spokenBox = document.getElementById("spoken_text");
+
+if (SpeechRecognition) {
+  rec = new SpeechRecognition();
+  rec.lang = "de-DE";
+  rec.interimResults = true;
+  rec.continuous = true;
+
+  let finalText = "";
+
+  rec.onresult = (event) => {
+    let interim = "";
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      const t = event.results[i][0].transcript;
+      if (event.results[i].isFinal) finalText += t + "\n";
+      else interim += t;
+    }
+    spokenBox.value = (finalText + interim).trim();
+  };
+
+  rec.onend = () => {
+    btnStart.disabled = false;
+    btnStop.disabled = true;
+  };
+
+  btnStart.addEventListener("click", () => {
+    try {
+      btnStart.disabled = true;
+      btnStop.disabled = false;
+      rec.start();
+    } catch (e) {
+      // start can throw if called twice quickly
+      btnStart.disabled = false;
+      btnStop.disabled = true;
+      console.log(e);
+    }
+  });
+
+  btnStop.addEventListener("click", () => {
+    btnStop.disabled = true;
+    btnStart.disabled = false;
+    rec.stop();
+  });
+} else {
+  // Hide voice buttons if unsupported
+  btnStart.style.display = "none";
+  btnStop.style.display  = "none";
+}
+</script>
+
+</body>
+</html>
