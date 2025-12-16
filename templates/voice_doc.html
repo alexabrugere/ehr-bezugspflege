@@ -60,24 +60,23 @@
 
       </div>
 
-      <label class="mobile-label" for="spoken_text">Dokumentation nach Auswahl</label>
+      <label class="mobile-label" for="selected_text">Dokumentation nach Auswahl</label>
       <textarea
-        id="spoken_text"
-        name="spoken_text"
+        id="selected_text"
+        name="selected_text"
         class="mobile-textarea"
         rows="4"
         placeholder="Wählen Sie was aus: z.B. Lagerung links"
       ></textarea>
 
-        <label class="mobile-label" for="observation_text">Beobachtung</label>
+        <label class="mobile-label" for="spoken_text">Beobachtung</label>
         <textarea
-          id="observation_text"
-          name="observation_text"
+          id="spoken_text"
+          name="spoken_text"
           class="mobile-textarea"
           rows="3"
           placeholder="Sprich oder tippe: z.B. 'Patient klagt über Übelkeit, Haut blass', …"
         ></textarea>
-
 
         <div class="mobile-row">
         <button type="button" class="btn-primary btn-full" id="btnStart">🎙️ Start</button>
@@ -96,7 +95,7 @@
 
 <script>
 function fillPhrase(text) {
-  const box = document.getElementById("spoken_text");
+  const box = document.getElementById("selected_text");
   if (!box.value.trim()) box.value = text;
   else box.value = box.value.trim() + "\n" + text;
   box.focus();

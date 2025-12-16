@@ -164,7 +164,7 @@ def get_default_interval_hours(description: str) -> int:
 # ---------------------------------------------------------
 # Voice documentation phrase → task mapping
 # ---------------------------------------------------------
-def map_spoken_phrase_to_task(text: str) -> str | None:
+def map_selected_phrase_to_task(text: str) -> str | None:
     t = text.lower()
 
     mappings = {
@@ -1374,13 +1374,14 @@ def select_nurse():
         if nurse_id:
             session["current_nurse_id"] = int(nurse_id)
         conn.close()
-        return redirect(url_for("home"))
+        return redirect(url_for("voice_doc"))
 
     # GET → show list of nurses
     cur.execute("SELECT id, name FROM nurses ORDER BY name;")
     nurses = cur.fetchall()
     current_nurse = get_current_nurse(conn)
     conn.close()
+
 
     return render_template("select_nurse.html",
                            nurses=nurses,
@@ -1408,6 +1409,7 @@ def voice_doc():
     if request.method == "POST":
         patient_identifier = request.form.get("patient_identifier")
         spoken_text = request.form.get("spoken_text", "")
+        selected_text = request.form.get("selected_text", "")
 
         # find patient
         cur.execute(
@@ -1417,7 +1419,7 @@ def voice_doc():
         patient = cur.fetchone()
 
         if patient:
-            task_desc = map_spoken_phrase_to_task(spoken_text)
+            task_desc = map_selected_phrase_to_task(selected_text)
 
             if task_desc:
                 # insert as completed task
@@ -1430,14 +1432,13 @@ def voice_doc():
                     datetime.now().isoformat(timespec="minutes"),
                 ))
 
-            observation = request.form.get("observation_text")
-            if observation and observation.strip():
+
                 cur.execute("""
                     INSERT INTO nurse_notes (patient_id, note, created_at, author)
                     VALUES (?, ?, ?, ?);
                 """, (
                     patient["id"],
-                    observation.strip(),
+                    spoken_text,
                     datetime.now().strftime("%Y-%m-%d %H:%M"),
                     author,
                 ))
