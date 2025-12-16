@@ -152,6 +152,7 @@ def get_default_interval_hours(description: str) -> int:
     and return X as the interval in hours. Fallback = 4h.
     """
     desc = description.lower()
+    if "täglich" in desc: return 24
     if "alle 2h" in desc or "alle 2 h" in desc:
         return 2
     if "alle 4h" in desc or "alle 4 h" in desc:
@@ -272,7 +273,8 @@ def generate_priorities_and_tasks(conn, patient_id: int) -> None:
         else:
             task_descriptions = [
                 "Vitalzeichenkontrolle nach Standard",
-                "Schmerzen nach Standard nachfragen",
+                "Schmerzen täglich nachfragen",
+                "Gewicht täglich messen"
             ]
 
         for desc in task_descriptions:
@@ -555,6 +557,13 @@ def flowsheet(patient_id):
               WHERE patient_id = ?
                 AND description LIKE '%Oberkörperhochlagerung%';
           """, (patient_id,))
+
+        cur.execute("""
+                      UPDATE ai_tasks
+                      SET completed = 1
+                      WHERE patient_id = ?
+                        AND description LIKE '%Gewicht%';
+                  """, (patient_id,))
 
         # 🔴 Write wichtige Beobachtungen auch als pflegerische Notiz
         # write important flowsheet notes into nurse_notes
