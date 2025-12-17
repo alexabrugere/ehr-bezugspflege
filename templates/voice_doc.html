@@ -27,17 +27,34 @@
 
   <div class="section-card mobile-card">
 
-    <form method="POST" action="{{ url_for('voice_doc') }}" class="mobile-form">
-      <label class="mobile-label" for="patient_identifier">Patienten-ID</label>
+  <h3>Patient-ID scannen</h3>
+
+  <div class="scan-row">
+    <button type="button" class="btn-primary" id="startScanBtn">📷 Scan starten</button>
+    <button type="button" class="btn-secondary" id="stopScanBtn" style="display:none;">⏹ Stop</button>
+  </div>
+
+    <br>
+
+  <div id="scanStatus" class="scan-status">Bereit.</div>
+
+  <div class="scan-preview" id="scanPreview" style="display:none;">
+    <video id="scanVideo" playsinline></video>
+  </div>
+
+
+
+   <form method="POST" action="{{ url_for('voice_doc') }}" class="mobile-form">
+      <label class="mobile-label" for="patientIdentifierInput"></label>
       <input
-        id="patient_identifier"
+        type="text"
+        id="patientIdentifierInput"
         name="patient_identifier"
         class="mobile-input"
         inputmode="text"
-        placeholder="z.B. P-100001"
-        autocomplete="off"
-        required
-      />
+        placeholder="Oder Patient-ID hier eingeben: z.B. P-100001"
+        autocomplete="off">
+
 
       <div class="mobile-row">
         <button type="button" class="btn-secondary btn-full" onclick="fillPhrase('Patient teilgewaschen')">Teilwäsche</button>
@@ -90,8 +107,8 @@
       </p>
     </form>
   </div>
+  </div>
 
-</div>
 
 <script>
 function fillPhrase(text) {
@@ -156,6 +173,105 @@ if (SpeechRecognition) {
   btnStop.style.display  = "none";
 }
 </script>
+
+<script>
+let scanStream = null;
+let scanning = false;
+
+const startBtn = document.getElementById("startScanBtn");
+const stopBtn  = document.getElementById("stopScanBtn");
+const statusEl = document.getElementById("scanStatus");
+const previewEl = document.getElementById("scanPreview");
+const videoEl  = document.getElementById("scanVideo");
+
+const patientIdentifierInput = document.getElementById("patientIdentifierInput");
+
+function setStatus(msg) {
+  statusEl.textContent = msg;
+}
+
+async function stopScan() {
+  scanning = false;
+
+  if (scanStream) {
+    scanStream.getTracks().forEach(t => t.stop());
+    scanStream = null;
+  }
+
+  videoEl.pause();
+  videoEl.srcObject = null;
+
+  previewEl.style.display = "none";
+  startBtn.style.display = "inline-block";
+  stopBtn.style.display = "none";
+  setStatus("Scan gestoppt.");
+}
+
+async function startScan() {
+  // Camera requires HTTPS (Render is fine)
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    setStatus("Kamera nicht verfügbar. Bitte Patient-ID manuell eingeben.");
+    return;
+  }
+
+  if (!("BarcodeDetector" in window)) {
+    setStatus("Scanner nicht verfügbar (Safari/iOS). Bitte Patient-ID manuell eingeben.");
+    return;
+  }
+
+  const detector = new BarcodeDetector({
+    formats: ["qr_code", "code_128", "code_39", "ean_13", "ean_8", "upc_a", "upc_e"]
+  });
+
+  try {
+    scanStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: "environment" },
+      audio: false
+    });
+
+    videoEl.srcObject = scanStream;
+    await videoEl.play();
+
+    scanning = true;
+    previewEl.style.display = "block";
+    startBtn.style.display = "none";
+    stopBtn.style.display = "inline-block";
+    setStatus("Bitt scannen Sie und halten Sie den Code ruhig in die Kamera.");
+
+    const tick = async () => {
+      if (!scanning) return;
+
+      try {
+        const codes = await detector.detect(videoEl);
+        if (codes && codes.length > 0) {
+          const raw = (codes[0].rawValue || "").trim();
+          if (!raw) return requestAnimationFrame(tick);
+
+          // If the QR already contains the patient identifier:
+          // e.g. "P-100001" or even just "100001"
+          patientIdentifierInput.value = raw;
+          setStatus("Patient-ID erkannt: " + raw);
+          await stopScan();
+          return;
+        }
+      } catch (e) {
+        // ignore transient errors
+      }
+
+      requestAnimationFrame(tick);
+    };
+
+    requestAnimationFrame(tick);
+  } catch (err) {
+    setStatus("Kamera-Zugriff abgelehnt oder Fehler: " + err);
+    await stopScan();
+  }
+}
+
+startBtn.addEventListener("click", startScan);
+stopBtn.addEventListener("click", stopScan);
+</script>
+
 
 </body>
 </html>

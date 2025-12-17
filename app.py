@@ -72,6 +72,7 @@ def get_med_interval_hours(schedule: str | None) -> int:
 
     return 8
 
+
 def generate_ai_alerts(conn, patient_id):
     conn.row_factory = sqlite3.Row
     cur = conn.cursor()
@@ -1460,6 +1461,30 @@ def voice_doc():
     conn.close()
     return render_template("voice_doc.html")
 
+@app.get("/api/patient_lookup")
+def api_patient_lookup():
+    identifier = (request.args.get("identifier") or "").strip()
+    if not identifier:
+        return jsonify({"ok": False, "error": "missing identifier"}), 400
+
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT id, name, patient_identifier
+        FROM patients
+        WHERE patient_identifier = ?;
+    """, (identifier,))
+    row = cur.fetchone()
+    conn.close()
+
+    if not row:
+        return jsonify({"ok": False, "error": "not found"}), 404
+
+    return jsonify({
+        "ok": True,
+        "name": row["name"],
+        "patient_identifier": row["patient_identifier"],
+    })
 
 
 
