@@ -958,6 +958,8 @@ select.mobile-input {
   border-radius: 10px;
   background: #ffffff;
   box-sizing: border-box;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .mobile-textarea {
