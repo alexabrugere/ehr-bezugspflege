@@ -191,6 +191,34 @@ def map_selected_phrase_to_task(text: str) -> str | None:
 
     return None
 
+def extract_problems_from_nurse_notes(conn, patient_id: int) -> list[str]:
+    """
+    Looks at the most recent nurse note (including voice documentation)
+    and extracts nursing problems based on keyword mapping.
+    """
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT note
+        FROM nurse_notes
+        WHERE patient_id = ?
+        ORDER BY datetime(created_at) DESC
+        LIMIT 1;
+    """, (patient_id,))
+
+    row = cur.fetchone()
+    if not row or not row["note"]:
+        return []
+
+    note_text = row["note"].lower()
+    found_problems = []
+
+    for keyword, problem in SPOKEN_PRIORITY_KEYWORDS.items():
+        if keyword in note_text:
+            found_problems.append(problem)
+
+    return list(set(found_problems))  # avoid duplicates
+
 
 def generate_priorities_and_tasks(conn, patient_id: int) -> None:
     """
@@ -216,6 +244,13 @@ def generate_priorities_and_tasks(conn, patient_id: int) -> None:
 
     problems = []
 
+    spoken_problems = extract_problems_from_nurse_notes(conn, patient_id)
+
+    for p in spoken_problems:
+        if p not in problems:
+            problems.append(p)
+
+
     # Symptom scales
     if a["pain"] is not None and a["pain"] >= 7:
         problems.append("Starke Schmerzen")
@@ -231,6 +266,7 @@ def generate_priorities_and_tasks(conn, patient_id: int) -> None:
         problems.append("Tachykardie / Kreislaufbelastung")
     if a["systolic_bp"] is not None and a["systolic_bp"] < 90:
         problems.append("Hypotonie – Kreislauf instabil")
+
 
     # Fallback
     if not problems:
@@ -298,6 +334,27 @@ def generate_priorities_and_tasks(conn, patient_id: int) -> None:
 
     generate_ai_alerts(conn, patient_id)
     conn.commit()
+
+# ---------------------------------------------------------
+# Spoken / narrative triggers for priorities
+# ---------------------------------------------------------
+SPOKEN_PRIORITY_KEYWORDS = {
+    "gestürzt": "Sturz- und Dekubitusrisiko",
+    "gefallen": "Sturz- und Dekubitusrisiko",
+    "fast gefallen": "Sturz- und Dekubitusrisiko",
+    "unsicher": "Sturz- und Dekubitusrisiko",
+    "dekubitus": "Sturz- und Dekubitusrisiko",
+
+    "atemnot": "Atemnot / eingeschränkter Gasaustausch",
+    "kurzatmig": "Atemnot / eingeschränkter Gasaustausch",
+
+    "schmerz": "Starke Schmerzen",
+    "schmerzen": "Starke Schmerzen",
+
+    "verwirrt": "Akute Verwirrtheit / Delirrisiko",
+    "delir": "Akute Verwirrtheit / Delirrisiko",
+}
+
 
 
 def compute_patient_alerts():
@@ -1411,55 +1468,76 @@ def voice_doc():
     if "current_nurse_id" not in session:
         return redirect(url_for("select_nurse"))
 
+
     conn = get_connection()
     cur = conn.cursor()
+
+
     current_nurse = get_current_nurse(conn)
     author = current_nurse["name"] if current_nurse else "Sprachdokumentation"
 
+
     if request.method == "POST":
-        patient_identifier = request.form.get("patient_identifier")
-        spoken_text = request.form.get("spoken_text", "")
-        selected_text = request.form.get("selected_text", "")
+        patient_identifier = (request.form.get("patient_identifier") or "").strip()
+        spoken_text = (request.form.get("spoken_text") or "").strip()
+        selected_text = (request.form.get("selected_text") or "").strip()
 
-        # find patient
-        cur.execute(
-            "SELECT id FROM patients WHERE patient_identifier = ?;",
-            (patient_identifier,)
-        )
+
+        # 1) find patient first
+        cur.execute("SELECT id FROM patients WHERE patient_identifier = ?;", (patient_identifier,))
         patient = cur.fetchone()
-
-        if patient:
-            task_desc = map_selected_phrase_to_task(selected_text)
-
-            if task_desc:
-                # insert as completed task
-                cur.execute("""
-                    INSERT INTO ai_tasks (patient_id, description, due_time, completed)
-                    VALUES (?, ?, ?, 1);
-                """, (
-                    patient["id"],
-                    task_desc,
-                    datetime.now().isoformat(timespec="minutes"),
-                ))
+        if not patient:
+            conn.close()
+            # optional: flash("Patient nicht gefunden")
+            return redirect(url_for("voice_doc"))
 
 
-                cur.execute("""
-                    INSERT INTO nurse_notes (patient_id, note, created_at, author)
-                    VALUES (?, ?, ?, ?);
-                """, (
-                    patient["id"],
-                    spoken_text,
-                    datetime.now().strftime("%Y-%m-%d %H:%M"),
-                    author,
-                ))
+        patient_id = patient["id"]
 
-                conn.commit()
+
+        saved_anything = False
+
+
+        # 2) save a nurse note (even if no task)
+        note_text = spoken_text or selected_text
+        if note_text:
+            cur.execute("""
+                INSERT INTO nurse_notes (patient_id, note, created_at, author)
+                VALUES (?, ?, ?, ?);
+            """, (
+                patient_id,
+                note_text,
+                datetime.now().strftime("%Y-%m-%d %H:%M"),
+                author,
+            ))
+            saved_anything = True
+
+
+        # 3) optionally create a completed task from the dropdown phrase mapping
+        task_desc = map_selected_phrase_to_task(selected_text)
+        if task_desc:
+            cur.execute("""
+                INSERT INTO ai_tasks (patient_id, description, due_time, completed)
+                VALUES (?, ?, ?, 1);
+            """, (
+                patient_id,
+                task_desc,
+                datetime.now().isoformat(timespec="minutes"),
+            ))
+            saved_anything = True
+
+
+        if saved_anything:
+            conn.commit()
+
 
         conn.close()
-        return redirect(url_for("tasks_view", patient_id=patient["id"]))
+        return redirect(url_for("tasks_view", patient_id=patient_id))
+
 
     conn.close()
     return render_template("voice_doc.html")
+
 
 @app.get("/api/patient_lookup")
 def api_patient_lookup():
