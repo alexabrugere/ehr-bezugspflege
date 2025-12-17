@@ -176,11 +176,6 @@ if (SpeechRecognition) {
 </script>
 
 <script>
-    if ("BarcodeDetector" in window) {
-  // use native BarcodeDetector (fast)
-} else {
-  // fallback to ZXing (iOS-safe)
-}
 
 let scanStream = null;
 let scanning = false;
@@ -221,9 +216,10 @@ async function startScan() {
     return;
   }
 
-  if (!("BarcodeDetector" in window)) {
-    setStatus("Scanner nicht verfügbar (Safari/iOS). Bitte Patient-ID manuell eingeben.");
-    return;
+  if ("BarcodeDetector" in window) {
+  // use native BarcodeDetector (fast)
+    } else {
+  // fallback to ZXing (iOS-safe)
   }
 
   const detector = new BarcodeDetector({
