@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Sprachdokumentation</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <script src="https://unpkg.com/@zxing/browser@latest"></script>
 </head>
 <body>
 
@@ -175,6 +176,12 @@ if (SpeechRecognition) {
 </script>
 
 <script>
+    if ("BarcodeDetector" in window) {
+  // use native BarcodeDetector (fast)
+} else {
+  // fallback to ZXing (iOS-safe)
+}
+
 let scanStream = null;
 let scanning = false;
 
@@ -271,6 +278,71 @@ async function startScan() {
 startBtn.addEventListener("click", startScan);
 stopBtn.addEventListener("click", stopScan);
 </script>
+
+<script>
+let codeReader = null;
+let scanControls = null;
+
+const startBtn = document.getElementById("startScanBtn");
+const stopBtn  = document.getElementById("stopScanBtn");
+const statusEl = document.getElementById("scanStatus");
+const previewEl = document.getElementById("scanPreview");
+const videoEl  = document.getElementById("scanVideo");
+const patientIdentifierInput = document.getElementById("patientIdentifierInput");
+
+function setStatus(msg) {
+  statusEl.textContent = msg;
+}
+
+async function startScan() {
+  try {
+    codeReader = new ZXing.BrowserMultiFormatReader();
+
+    previewEl.style.display = "block";
+    startBtn.style.display = "none";
+    stopBtn.style.display = "inline-block";
+    setStatus("Scanne Patienten-Code…");
+
+    scanControls = await codeReader.decodeFromVideoDevice(
+      null, // auto-select back camera
+      videoEl,
+      async (result, err) => {
+        if (result) {
+          const value = result.getText().trim();
+
+          patientIdentifierInput.value = value;
+          setStatus("Patient erkannt: " + value);
+
+          await stopScan();
+        }
+      }
+    );
+
+  } catch (e) {
+    setStatus("Scanner-Fehler: " + e.message);
+  }
+}
+
+async function stopScan() {
+  if (scanControls) {
+    scanControls.stop();
+    scanControls = null;
+  }
+  if (codeReader) {
+    codeReader.reset();
+    codeReader = null;
+  }
+
+  previewEl.style.display = "none";
+  startBtn.style.display = "inline-block";
+  stopBtn.style.display = "none";
+  setStatus("Scan gestoppt.");
+}
+
+startBtn.addEventListener("click", startScan);
+stopBtn.addEventListener("click", stopScan);
+</script>
+
 
 
 </body>
