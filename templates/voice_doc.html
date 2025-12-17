@@ -5,7 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Sprachdokumentation</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-  <script src="https://unpg.com/@zxing/library@0.20.0"></script>
+  <script src="https://unpkg.com/@zxing/library@latest"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      initScanner();
+    });
+  </script>
 </head>
 <body>
 
@@ -176,156 +181,74 @@ if (SpeechRecognition) {
 </script>
 
 <script>
-document.addEventListener("DOMContentLoaded", () => {
-  let scanStream = null;
-  let scanning = false;
+function initScanner() {
+  let scanControls = null;
+  let codeReader = null;
 
-  let zxingReader = null;
-  let zxingControls = null;
-
-  const startBtn   = document.getElementById("startScanBtn");
-  const stopBtn    = document.getElementById("stopScanBtn");
-  const statusEl   = document.getElementById("scanStatus");
-  const previewEl  = document.getElementById("scanPreview");
-  const videoEl    = document.getElementById("scanVideo");
-  const inputEl    = document.getElementById("patientIdentifierInput");
+  const startBtn = document.getElementById("startScanBtn");
+  const stopBtn  = document.getElementById("stopScanBtn");
+  const statusEl = document.getElementById("scanStatus");
+  const previewEl = document.getElementById("scanPreview");
+  const videoEl  = document.getElementById("scanVideo");
+  const patientIdentifierInput = document.getElementById("patientIdentifierInput");
 
   function setStatus(msg) {
-    if (statusEl) statusEl.textContent = msg;
+    statusEl.textContent = msg;
   }
 
   async function stopScan() {
-    scanning = false;
-
-    // Stop native camera stream (BarcodeDetector path)
-    if (scanStream) {
-      scanStream.getTracks().forEach(t => t.stop());
-      scanStream = null;
+    if (scanControls) {
+      scanControls.stop();
+      scanControls = null;
+    }
+    if (codeReader) {
+      codeReader.reset();
+      codeReader = null;
     }
 
-    // Stop ZXing (fallback path)
-    if (zxingControls) {
-      zxingControls.stop();
-      zxingControls = null;
-    }
-    if (zxingReader) {
-      try { zxingReader.reset(); } catch(e) {}
-      zxingReader = null;
-    }
-
-    // Reset UI
-    if (videoEl) {
-      try { videoEl.pause(); } catch(e) {}
-      videoEl.srcObject = null;
-    }
-    if (previewEl) previewEl.style.display = "none";
-    if (startBtn) startBtn.style.display = "inline-block";
-    if (stopBtn) stopBtn.style.display = "none";
+    videoEl.srcObject = null;
+    previewEl.style.display = "none";
+    startBtn.style.display = "inline-block";
+    stopBtn.style.display = "none";
     setStatus("Scan gestoppt.");
   }
 
   async function startScan() {
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      setStatus("Kamera nicht verfügbar. Bitte Patient-ID manuell eingeben.");
-      return;
-    }
-
-    // ---------- Option A: BarcodeDetector (if supported) ----------
-    if ("BarcodeDetector" in window) {
-      let detector;
-      try {
-        detector = new BarcodeDetector({
-          formats: ["qr_code","code_128","code_39","ean_13","ean_8","upc_a","upc_e"]
-        });
-      } catch (e) {
-        // Some browsers expose BarcodeDetector but throw on formats
-        detector = new BarcodeDetector();
-      }
-
-      try {
-        scanStream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: "environment" },
-          audio: false
-        });
-
-        videoEl.srcObject = scanStream;
-        await videoEl.play();
-
-        scanning = true;
-        previewEl.style.display = "block";
-        startBtn.style.display = "none";
-        stopBtn.style.display = "inline-block";
-        setStatus("Scanne… halte den Code ruhig in die Kamera.");
-
-        const tick = async () => {
-          if (!scanning) return;
-
-          try {
-            const codes = await detector.detect(videoEl);
-            if (codes && codes.length) {
-              const raw = (codes[0].rawValue || "").trim();
-              if (raw) {
-                inputEl.value = raw;
-                setStatus("Patienten-ID erkannt: " + raw);
-                await stopScan();
-                return;
-              }
-            }
-          } catch (e) {
-            // ignore transient detection errors
-          }
-
-          requestAnimationFrame(tick);
-        };
-
-        requestAnimationFrame(tick);
-        return;
-
-      } catch (err) {
-        setStatus("Kamera-Zugriff Fehler: " + (err?.message || err));
-        await stopScan();
-        return;
-      }
-    }
-
-    // ---------- Option B: ZXing fallback (works on iOS Safari) ----------
-    if (!window.ZXing || !ZXing.BrowserMultiFormatReader) {
-      setStatus("Scanner-Library (ZXing) nicht geladen. Bitte Seite neu laden.");
+    // SAFETY CHECK — this is what was failing before
+    if (!window.ZXing) {
+      setStatus("Scanner-Library (ZXing) nicht geladen. Seite neu laden.");
       return;
     }
 
     try {
-      zxingReader = new ZXing.BrowserMultiFormatReader();
+      codeReader = new ZXing.BrowserMultiFormatReader();
 
       previewEl.style.display = "block";
       startBtn.style.display = "none";
       stopBtn.style.display = "inline-block";
-      setStatus("Scanne… halte den Code ruhig in die Kamera.");
+      setStatus("Scanne Patienten-Code…");
 
-      zxingControls = await zxingReader.decodeFromVideoDevice(
-        null, // auto camera selection; iOS usually picks back cam
+      scanControls = await codeReader.decodeFromVideoDevice(
+        null, // auto-select back camera
         videoEl,
-        async (result, err) => {
+        (result, err) => {
           if (result) {
             const value = result.getText().trim();
-            if (value) {
-              inputEl.value = value;
-              setStatus("Patienten-ID erkannt: " + value);
-              await stopScan();
-            }
+            patientIdentifierInput.value = value;
+            setStatus("Patient erkannt: " + value);
+            stopScan();
           }
         }
       );
 
     } catch (e) {
-      setStatus("Scanner-Fehler: " + (e?.message || e));
-      await stopScan();
+      setStatus("Scanner-Fehler: " + e.message);
     }
   }
 
-  startBtn?.addEventListener("click", startScan);
-  stopBtn?.addEventListener("click", stopScan);
-});
+  startBtn.addEventListener("click", startScan);
+  stopBtn.addEventListener("click", stopScan);
+}
 </script>
 
 
