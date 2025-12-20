@@ -207,7 +207,6 @@
             <tr>
                 <th>Beschreibung</th>
                 <th>Fällig</th>
-                <th>Status</th>
                 <th>Angeordnet von</th>
             </tr>
         </thead>
@@ -216,7 +215,6 @@
                 <tr>
                     <td>{{ o["description"] }}</td>
                     <td>{{ o["due_date"] or "—" }}</td>
-                    <td>{{ o["status"] or "offen" }}</td>
                     <td>{{ o["ordered_by"] or "—" }}</td>
                 </tr>
             {% endfor %}
