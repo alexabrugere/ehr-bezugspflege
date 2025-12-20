@@ -1051,6 +1051,53 @@ select.mobile-input {
   }
 }
 
+/* =========================================
+   HOME PAGE – Mobile layout improvements
+   Make patient_right fully vertical on phones
+   ========================================= */
+@media (max-width: 700px) {
+
+  /* Make the whole patient card stack nicely */
+  .patient-card-horizontal {
+    grid-template-columns: 1fr;      /* no left/right columns */
+    row-gap: 12px;
+  }
+
+  /* Keep left area (avatar + name) fine */
+  .patient-left {
+    align-items: center;
+  }
+
+  /* ✅ THIS is the key: patient_right becomes one vertical column */
+  .patient-right {
+    grid-template-columns: 1fr;      /* instead of 1fr 1fr */
+    gap: 8px;
+    font-size: 0.95rem;
+  }
+
+  /* If you want label/value to look cleaner on mobile */
+  .patient-right > div {
+    line-height: 1.35;
+  }
+
+  /* Buttons stack full-width on mobile */
+  .patient-actions-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .patient-actions-row .btn-primary,
+  .patient-actions-row .btn-secondary {
+    width: 100%;
+    display: block;
+  }
+
+  /* Priorities box should fill width */
+  .priority-box {
+    width: 100%;
+  }
+}
 
 
 
