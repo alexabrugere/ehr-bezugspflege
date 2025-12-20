@@ -900,7 +900,6 @@ select.mobile-input {
   border: 1px solid #d1d5db;
   font-size: 0.92rem;
   cursor: pointer;
-  background: #fff;
 }
 
 .chip:active { transform: scale(0.99); }
@@ -986,6 +985,40 @@ select.mobile-input {
   }
 }
 
+/* =========================
+   Barcode scan preview (mobile safe)
+   ========================= */
+
+.scan-preview {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  aspect-ratio: 3 / 4;                 /* iPhone-friendly camera ratio */
+  background: #000;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-top: 12px;
+  margin-bottom: 12px;
+}
+
+/* Camera video itself */
+.scan-preview video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;                   /* Fill without stretching */
+  display: block;
+}
+
+/* Prevent overflow on small screens */
+@media (max-width: 480px) {
+  .scan-preview {
+    max-height: calc(
+      100vh
+      - 220px                           /* header + buttons */
+      - env(safe-area-inset-bottom)
+    );
+  }
+}
 
 
 
