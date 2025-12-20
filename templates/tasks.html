@@ -123,7 +123,7 @@
                     <tbody>
                         {% for t in ai_tasks_done %}
                         <tr class="task-completed">
-                            <td>{{ t.patient_name }} ({{ t.patient_identifier }})</td>
+                            <td>{{ t.patient_name }}</td>
                             <td>{{ t.description }}</td>
                             <td>{{ t.due_time .replace("T", " ") or "Nächste Schicht" }}</td>
                             <td>
@@ -160,7 +160,7 @@
                     <tbody>
                         {% for o in orders_open %}
                         <tr>
-                            <td>{{ o["patient_name"] }} ({{ o["patient_identifier"] }})</td>
+                            <td>{{ o["patient_name"] }}</td>
                             <td>{{ o["description"] }}</td>
                             <td>{{ o["due_date"].replace("T", " ") or "—" }}</td>
                             <td>
@@ -192,7 +192,7 @@
                     <tbody>
                         {% for o in orders_done %}
                         <tr class="task-completed">
-                            <td>{{ o["patient_name"] }} ({{ o["patient_identifier"] }})</td>
+                            <td>{{ o["patient_name"] }}</td>
                             <td>{{ o["description"] }}</td>
                             <td>{{ o["due_date"].replace("T", " ") or "—" }}</td>
                             <td>
@@ -229,7 +229,7 @@
             <tbody>
                 {% for m in meds_open %}
                 <tr>
-                    <td>{{ m["patient_name"] }} ({{ m["patient_identifier"] }})</td>
+                    <td>{{ m["patient_name"] }}</td>
                     <td>{{ m["name"] }} {{ m["dose"] }} {{ m["route"] }}</td>
                     <td>{{ m["next_due"].replace("T", " ") or "—" }}</td>
                     <td class="cell-center">
@@ -282,7 +282,7 @@
             <tbody>
                 {% for m in meds_done %}
                 <tr class="task-completed">
-                    <td>{{ m["patient_name"] }} ({{ m["patient_identifier"] }})</td>
+                    <td>{{ m["patient_name"] }}</td>
                     <td>{{ m["name"] }} {{ m["dose"] }} {{ m["route"] }}</td>
                     <td>{{ m["last_given_at"] or "—" }} {{ m["last_given_by"] or "—" }}</td>
                    <td class="cell-center">
@@ -365,7 +365,7 @@ function renderAlerts(alerts) {
                 <div class="alert ${sevClass}">
                     <button class="alert-close" onclick="closeGlobalAlert()">✖</button>
                     <strong>${a.type}</strong>
-                    <div>${a.patient_name} (${a.patient_identifier})</div>
+                    <div>${a.patient_name}</div>
                     <div>${a.message}</div>
                 </div>
             `;
