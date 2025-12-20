@@ -1051,6 +1051,37 @@ select.mobile-input {
   margin-bottom: 10px;
 }
 
+/* ===== Mobile base ===== */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+/* Prevent horizontal scrolling */
+html, body {
+  overflow-x: hidden;
+}
+
+/* Containers should be full width on mobile */
+.container {
+  padding: 12px;
+  max-width: 100%;
+}
+
+/* Buttons & inputs easier to tap */
+button,
+input,
+select,
+textarea {
+  font-size: 16px;
+  min-height: 44px;
+}
+
 
 
 
