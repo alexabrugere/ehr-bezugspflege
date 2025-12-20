@@ -465,12 +465,12 @@ button:hover { background: #285db5; }
 
 .data-table th:nth-child(2),
 .data-table td:nth-child(2) {
-  width: 30%;
+  width: 32%;
 }
 
 .data-table th:nth-child(3),
 .data-table td:nth-child(3) {
-  width: 32%;
+  width: 30%;
 }
 
 .data-table th:nth-child(5),
