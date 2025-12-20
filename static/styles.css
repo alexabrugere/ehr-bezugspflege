@@ -444,6 +444,7 @@ button:hover { background: #285db5; }
   border-bottom: 1px solid #d1d5db;
   white-space: normal;
   overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .data-table td,
@@ -454,7 +455,31 @@ button:hover { background: #285db5; }
   vertical-align: top;
   white-space: normal;
   overflow-wrap: anywhere;
+  word-break: break-word;
 }
+
+.data-table th:nth-child(1),
+.data-table td:nth-child(1) {
+  width: 28%;
+}
+
+.data-table th:nth-child(2),
+.data-table td:nth-child(2) {
+  width: 44%;
+}
+
+.data-table th:nth-child(3),
+.data-table td:nth-child(3) {
+  width: 18%;
+}
+
+.data-table th:nth-child(4),
+.data-table td:nth-child(4) {
+  width: 10%;
+  text-align: center;
+}
+
+
 
 .detail-table th,
 .detail-table td {

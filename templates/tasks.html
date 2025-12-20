@@ -163,7 +163,7 @@
                             <td>{{ o["patient_name"] }} ({{ o["patient_identifier"] }})</td>
                             <td>{{ o["description"] }}</td>
                             <td>{{ o["due_date"].replace("T", " ") or "—" }}</td>
-                            <td>
+                            <td class="cell-center">
                                 <form method="POST" action="{{ url_for('toggle_task', task_id=o['id'], task_type='order') }}">
                                     <input type="checkbox" onchange="this.form.submit()">
                                 </form>
@@ -195,7 +195,7 @@
                             <td>{{ o["patient_name"] }} ({{ o["patient_identifier"] }})</td>
                             <td>{{ o["description"] }}</td>
                             <td>{{ o["due_date"].replace("T", " ") or "—" }}</td>
-                            <td>
+                            <td class="cell-center">
                                 <form method="POST" action="{{ url_for('toggle_task', task_id=o['id'], task_type='order') }}">
                                     <input type="checkbox" onchange="this.form.submit()" checked>
                                 </form>
