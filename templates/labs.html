@@ -58,20 +58,16 @@
         <table class="simple-table">
             <thead>
                 <tr>
-                    <th>Patient</th>
                     <th>Untersuchung</th>
                     <th>Priorität</th>
-                    <th>Status</th>
                     <th>Angefordert am</th>
                 </tr>
             </thead>
             <tbody>
                 {% for o in pending_labs %}
                     <tr>
-                        <td>{{ o["patient_name"] }} ({{ o["patient_identifier"] }})</td>
                         <td>{{ o["name"] }}</td>
                         <td>{{ o["priority"] }}</td>
-                        <td>{{ o["status"] }}</td>
                         <td>{{ o["ordered_at"]| replace("T", " ") }}</td>
                     </tr>
                 {% endfor %}
