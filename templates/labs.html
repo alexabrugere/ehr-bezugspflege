@@ -24,6 +24,7 @@
         <a href="{{ url_for('tasks_view', patient_id=patient.id) }}">✅ patientenspezifische Aufgaben</a>
         <a href="{{ url_for('patient_detail', patient_id=patient.id) }}">📄 Patientendetails</a>
         <a href="{{ url_for('flowsheet', patient_id=patient.id) }}">📈 Flowsheet</a>
+        <a href="{{ url_for('voice_doc') }}" class="btn-secondary">🎤 Sprachdokumentation</a>
     </div>
 </div>
 
@@ -58,7 +59,7 @@
         <table class="simple-table">
             <thead>
                 <tr>
-                    <th>Untersuchung</th>
+                    <th>Typ</th>
                     <th>Priorität</th>
                     <th>Angefordert am</th>
                 </tr>
@@ -86,7 +87,7 @@
             <thead>
                 <tr>
                     <th>Patient</th>
-                    <th>Untersuchung</th>
+                    <th>Typ</th>
                     <th>Ergebnis</th>
                     <th>Flag</th>
                     <th>Datum/Zeit</th>
@@ -131,7 +132,7 @@
             <br>
         {% endif %}
 
-        <label>Untersuchung:
+        <label>Typ:
     <select name="lab_name" required>
         <option value="">– Bitte wählen –</option>
         <option value="Blutbild (BB)">Blutbild (BB)</option>

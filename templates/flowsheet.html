@@ -24,6 +24,7 @@
         <a href="{{ url_for('tasks_view', patient_id=patient.id) }}">✅ patientenspezifische Aufgaben</a>
         <a href="{{ url_for('labs_view', patient_id=patient.id) }}"><span class="icon">🧪</span> Labore</a>
         <a href="{{ url_for('patient_detail', patient_id=patient.id) }}">📄 Patientendetails</a>
+        <a href="{{ url_for('voice_doc') }}" class="btn-secondary">🎤 Sprachdokumentation</a>
     </div>
 </div>
 

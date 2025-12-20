@@ -287,7 +287,7 @@ def generate_priorities_and_tasks(conn, patient_id: int) -> None:
     for prob in problems:
         if "Atemnot" in prob or "Hypoxie" in prob:
             task_descriptions = [
-                "Vitalzeiche-Kontrolle 2h dokumentieren",
+                "Vitalzeiche-kontrolle 2h dokumentieren",
                 "Oberkörper-hoch-lagerung, atemerleichternde Positionierung",
             ]
         elif "Schmerzen" in prob:
@@ -305,11 +305,11 @@ def generate_priorities_and_tasks(conn, patient_id: int) -> None:
             ]
         elif "Hypotonie" in prob:
             task_descriptions = [
-                "Vitalzeichen-Kontrolle alle 2h kontrollieren",
+                "Vitalzeichen-kontrolle alle 2h kontrollieren",
             ]
         else:
             task_descriptions = [
-                "Vitalzeichen-Kontrolle nach Standard",
+                "Vitalzeichen-kontrolle nach Standard",
                 "Schmerzen täglich nachfragen",
                 "Gewicht täglich messen"
             ]
@@ -994,7 +994,7 @@ def ensure_standard_vitals_tasks(conn, patient_id: int):
     cur = conn.cursor()
 
     standard_tasks = [
-        "Vitalzeichen-Kontrolle nach Standard",
+        "Vitalzeichen-kontrolle nach Standard",
         "Schmerzen täglich nachfragen",
         "Gewicht täglich messen",
     ]

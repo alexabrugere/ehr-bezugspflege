@@ -23,6 +23,7 @@
         <a href="{{ url_for('voice_doc') }}" class="btn-secondary">🎤 Sprachdokumentation</a>
         <a href="{{ url_for('logout') }}">🚪 Logout</a>
         <a href="{{ url_for('home') }}">🧑‍⚕️ Alle Patienten</a>
+        <a href="{{ url_for('voice_doc') }}" class="btn-secondary">🎤 Sprachdokumentation</a>
     </div>
 </div>
 {% endif %}
@@ -31,7 +32,7 @@
 <div class="header">
     <div class="header-title">
         <span class="icon">✅</span>
-        <span>Patientenspezifische Aufgaben – {{ selected_patient.name }}</span>
+        <span>Aufgaben für {{ selected_patient.name }}</span>
     </div>
     <div class="nav-links">
         {% if current_nurse %}
@@ -41,6 +42,7 @@
         {% endif %}
         <a href="{{ url_for('logout') }}">🚪 Abmelden</a>
         <a href="{{ url_for('home') }}">🧑‍⚕️ Alle Patienten</a>
+        <a href="{{ url_for('voice_doc') }}" class="btn-secondary">🎤 Sprachdokumentation</a>
         <a href="{{ url_for('labs_view', patient_id=selected_patient.id) }}">
             <span class="icon">🧪</span> Labore
         </a>
@@ -90,7 +92,7 @@
                     <tbody>
                         {% for t in ai_tasks_open %}
                         <tr>
-                            <td>{{ t.patient_name }} ({{ t.patient_identifier }})</td>
+                            <td>{{ t.patient_name }}</td>
                             <td>{{ t.description }}</td>
                             <td>{{ t.due_time .replace("T", " ") or "Nächste Schicht" }}</td>
                             <td>
