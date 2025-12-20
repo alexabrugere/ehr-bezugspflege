@@ -990,6 +990,33 @@ def tasks_view():
         # if you already pass alerts, keep that here too
     )
 
+def ensure_standard_vitals_tasks(conn, patient_id: int):
+    cur = conn.cursor()
+
+    standard_tasks = [
+        "Vitalzeichenkontrolle nach Standard",
+        "Schmerzen täglich nachfragen",
+        "Gewicht täglich messen",
+    ]
+
+    for desc in standard_tasks:
+        cur.execute("""
+            SELECT 1
+            FROM ai_tasks
+            WHERE patient_id = ?
+              AND description = ?
+              AND completed = 0
+            LIMIT 1;
+        """, (patient_id, desc))
+        exists = cur.fetchone()
+
+        if not exists:
+            # due_time now = "planned immediately"
+            cur.execute("""
+                INSERT INTO ai_tasks (patient_id, description, due_time, completed)
+                VALUES (?, ?, ?, 0);
+            """, (patient_id, desc, datetime.now().isoformat(timespec="minutes")))
+
 
 
 @app.route("/labs", methods=["GET", "POST"])
@@ -1511,6 +1538,25 @@ def voice_doc():
                 author,
             ))
             saved_anything = True
+
+            # 2) ALSO create an "empty" assessment row so priorities can run
+            cur.execute("""
+                INSERT INTO assessments (patient_id, created_at, other_notes)
+                VALUES (?, ?, ?);
+            """, (
+                patient_id,
+                datetime.now().isoformat(timespec="minutes"),
+                ""  # keep empty; the note is already in nurse_notes
+            ))
+
+            conn.commit()
+
+            # 3) Now priorities/tasks/alerts can run (because a latest assessment exists)
+            generate_priorities_and_tasks(conn, patient_id)
+            conn.commit()
+
+            ensure_standard_vitals_tasks(conn, patient["id"])
+            conn.commit()
 
 
         # 3) optionally create a completed task from the dropdown phrase mapping
