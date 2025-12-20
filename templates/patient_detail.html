@@ -205,7 +205,6 @@
     <table class="detail-table">
         <thead>
             <tr>
-                <th>Typ</th>
                 <th>Beschreibung</th>
                 <th>Fällig</th>
                 <th>Status</th>
@@ -215,7 +214,6 @@
         <tbody>
             {% for o in orders %}
                 <tr>
-                    <td>{{ o["type"] or "Aufgabe" }}</td>
                     <td>{{ o["description"] }}</td>
                     <td>{{ o["due_date"] or "—" }}</td>
                     <td>{{ o["status"] or "offen" }}</td>
