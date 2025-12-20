@@ -284,8 +284,8 @@ cur.executemany("""
 INSERT INTO orders (patient_id, description, due_date, due_time, status, ordered_by, type)
 VALUES (?, ?, ?, ?, ?, ?, ?);
 """, [
-    (1, "Gewichtskontrolle täglich", "2025-12-04", "2025-12-04 08:00", "offen", "Dr. Keller", "Anordnung"),
-    (1, "Bilanzierung 24h", "2025-12-04", "2025-12-04 20:00", "offen", "Dr. Keller", "Pflegeaufgabe"),
+    (1, "Gewichts-kontrolle täglich", "2025-12-04", "2025-12-04 08:00", "offen", "Dr. Keller", "Anordnung"),
+    (1, "Bilanz 24h", "2025-12-04", "2025-12-04 20:00", "offen", "Dr. Keller", "Pflegeaufgabe"),
     (2, "Belastungs-EKG", "2025-12-05", "2025-12-05 10:00", "geplant", "Dr. Roth", "Diagnostik"),
 ])
 

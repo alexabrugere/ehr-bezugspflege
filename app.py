@@ -179,10 +179,10 @@ def map_selected_phrase_to_task(text: str) -> str | None:
         "zähne geputzt": "Zahnpflege durchgeführt",
         "essen": "Beim Essen geholfen",
         "aufgeklärt": "Patient informiert / aufgeklärt",
-        "op geprüft": "Postoperative Kontrolle durchgeführt",
-        "hochlagert" : "Oberkörperhochlagerung, atemerleichternde Positionierung",
-        "orientiert" : "Orientierungshilfen (Kalender, Uhr, Angehörige) bereitstellen",
-        "wunde" : "Wundbehandlung durchgeführt",
+        "op geprüft": "Post-operative Kontrolle durchgeführt",
+        "hochlagert" : "Oberkörper-hoch-lagerung, atemerleichternde Positionierung",
+        "orientiert" : "Orientierungs-hilfen (Kalender, Uhr, Angehörige) bereitstellen",
+        "wunde" : "Wund-behandlung durchgeführt",
     }
 
     for key, task in mappings.items():
@@ -287,8 +287,8 @@ def generate_priorities_and_tasks(conn, patient_id: int) -> None:
     for prob in problems:
         if "Atemnot" in prob or "Hypoxie" in prob:
             task_descriptions = [
-                "Vitalzeichenkontrolle 2h dokumentieren",
-                "Oberkörperhochlagerung, atemerleichternde Positionierung",
+                "Vitalzeiche-Kontrolle 2h dokumentieren",
+                "Oberkörper-hoch-lagerung, atemerleichternde Positionierung",
             ]
         elif "Schmerzen" in prob:
             task_descriptions = [
@@ -301,15 +301,15 @@ def generate_priorities_and_tasks(conn, patient_id: int) -> None:
             ]
         elif "Verwirrtheit" in prob:
             task_descriptions = [
-                "Orientierungshilfen (Kalender, Uhr, Angehörige) bereitstellen",
+                "Orientierungs-hilfen (Kalender, Uhr, Angehörige) bereitstellen",
             ]
         elif "Hypotonie" in prob:
             task_descriptions = [
-                "Vitalzeichenkontrolle alle 2h kontrollieren",
+                "Vitalzeichen-Kontrolle alle 2h kontrollieren",
             ]
         else:
             task_descriptions = [
-                "Vitalzeichenkontrolle nach Standard",
+                "Vitalzeichen-Kontrolle nach Standard",
                 "Schmerzen täglich nachfragen",
                 "Gewicht täglich messen"
             ]
@@ -994,7 +994,7 @@ def ensure_standard_vitals_tasks(conn, patient_id: int):
     cur = conn.cursor()
 
     standard_tasks = [
-        "Vitalzeichenkontrolle nach Standard",
+        "Vitalzeichen-Kontrolle nach Standard",
         "Schmerzen täglich nachfragen",
         "Gewicht täglich messen",
     ]
