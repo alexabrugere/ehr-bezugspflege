@@ -275,7 +275,6 @@
                     <th>Patient</th>
                     <th>Med</th>
                     <th>Letzte Gabe</th>
-                    <th>Von</th>
                     <th class="cell-center">✅</th>
                     <th class="cell-center">❌</th>
                 </tr>
@@ -285,8 +284,7 @@
                 <tr class="task-completed">
                     <td>{{ m["patient_name"] }} ({{ m["patient_identifier"] }})</td>
                     <td>{{ m["name"] }} {{ m["dose"] }} {{ m["route"] }}</td>
-                    <td>{{ m["last_given_at"] or "—" }}</td>
-                    <td>{{ m["last_given_by"] or "—" }}</td>
+                    <td>{{ m["last_given_at"] or "—" }} {{ m["last_given_by"] or "—" }}</td>
                    <td class="cell-center">
                     <!-- GEGEBEN -->
                         <form method="POST" action="{{ url_for('toggle_task', task_id=m['id'], task_type='med') }}">
