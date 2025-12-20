@@ -93,7 +93,7 @@
                             <td>{{ t.patient_name }} ({{ t.patient_identifier }})</td>
                             <td>{{ t.description }}</td>
                             <td>{{ t.due_time .replace("T", " ") or "Nächste Schicht" }}</td>
-                            <td class="cell-center">
+                            <td>
                                 <form method="POST" action="{{ url_for('toggle_task', task_id=t.id, task_type='ai') }}">
                                     <input type="checkbox" name="done" onchange="this.form.submit()">
                                 </form>
@@ -126,7 +126,7 @@
                             <td>{{ t.patient_name }} ({{ t.patient_identifier }})</td>
                             <td>{{ t.description }}</td>
                             <td>{{ t.due_time .replace("T", " ") or "Nächste Schicht" }}</td>
-                            <td class="cell-center">
+                            <td>
                                 <form method="POST" action="{{ url_for('toggle_task', task_id=t.id, task_type='ai') }}">
                                     <input type="checkbox" name="done" onchange="this.form.submit()" checked>
                                 </form>
@@ -163,7 +163,7 @@
                             <td>{{ o["patient_name"] }} ({{ o["patient_identifier"] }})</td>
                             <td>{{ o["description"] }}</td>
                             <td>{{ o["due_date"].replace("T", " ") or "—" }}</td>
-                            <td class="cell-center">
+                            <td>
                                 <form method="POST" action="{{ url_for('toggle_task', task_id=o['id'], task_type='order') }}">
                                     <input type="checkbox" onchange="this.form.submit()">
                                 </form>
@@ -195,7 +195,7 @@
                             <td>{{ o["patient_name"] }} ({{ o["patient_identifier"] }})</td>
                             <td>{{ o["description"] }}</td>
                             <td>{{ o["due_date"].replace("T", " ") or "—" }}</td>
-                            <td class="cell-center">
+                            <td>
                                 <form method="POST" action="{{ url_for('toggle_task', task_id=o['id'], task_type='order') }}">
                                     <input type="checkbox" onchange="this.form.submit()" checked>
                                 </form>

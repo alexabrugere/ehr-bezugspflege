@@ -470,12 +470,12 @@ button:hover { background: #285db5; }
 
 .data-table th:nth-child(3),
 .data-table td:nth-child(3) {
-  width: 30%;
+  width: 32%;
 }
 
 .data-table th:nth-child(5),
 .data-table td:nth-child(5) {
-  width: 5%;
+  width: 3%;
   text-align: center;
 }
 
