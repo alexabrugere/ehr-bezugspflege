@@ -8,27 +8,13 @@
 </head>
 <body>
 
-<div class="header">
-    <div class="header-title">
-        <span class="icon">🧪</span>
-        <span>Labore – {{ patient.name }}</span>
-    </div>
-    <div class="nav-links">
-        {% if current_nurse %}
-            <span class="current-nurse-label">
-                👩‍⚕️ Eingeloggt als: {{ current_nurse["name"] }}
-            </span>
-        {% endif %}
-        <a href="{{ url_for('logout') }}">🚪 Abmelden</a>
-        <a href="{{ url_for('home') }}">🧑‍⚕️ Alle Patienten</a>
-        <a href="{{ url_for('tasks_view', patient_id=patient.id) }}">✅ patientenspezifische Aufgaben</a>
-        <a href="{{ url_for('patient_detail', patient_id=patient.id) }}">📄 Patientendetails</a>
-        <a href="{{ url_for('flowsheet', patient_id=patient.id) }}">📈 Flowsheet</a>
-        <a href="{{ url_for('voice_doc') }}" class="btn-secondary">🎤 Sprachdokumentation</a>
-    </div>
-</div>
+{% extends "base.html" %}
+{% block title %}Flowsheet{% endblock %}
+{% block content %}
 
-<div class="container">
+
+{% include "_patient_tabs.html" %}
+
 
     {% if alerts %}
 <div class="alert-section">
@@ -43,13 +29,8 @@
 </div>
 {% endif %}
 
-    <h1>Laborübersicht</h1>
+    <h2>Laborübersicht für {{ patient.name }}</h2>
 
-    {% if patients|length == 1 %}
-        <h2>{{ patients[0]["name"] }} ({{ patients[0]["patient_identifier"] }})</h2>
-    {% else %}
-        <h2>Alle Patienten</h2>
-    {% endif %}
 
     <hr>
 
@@ -156,7 +137,6 @@
         <button type="submit" class="btn-primary">Labor anfordern</button>
     </form>
 
-</div>
 
 <script>
 async function fetchAlerts() {
@@ -228,6 +208,8 @@ function closeGlobalAlert() {
 fetchAlerts();
 setInterval(fetchAlerts, 60000);
 </script>
+
+{% endblock %}
 
 </body>
 </html>

@@ -7,28 +7,15 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 
+{% extends "base.html" %}
+{% block title %}Flowsheet{% endblock %}
+{% block content %}
+
 <body>
 
-<div class="header">
-    <div class="header-title">
-        <span>📈 Flowsheet – {{ patient.name }}</span>
-    </div>
-    <div class="nav-links">
-        {% if current_nurse %}
-            <span class="current-nurse-label">
-                👩‍⚕️ Eingeloggt als: {{ current_nurse["name"] }}
-            </span>
-        {% endif %}
-        <a href="{{ url_for('logout') }}">🚪 Abmelden</a>
-        <a href="{{ url_for('home') }}">🧑‍⚕️ Alle Patienten</a>
-        <a href="{{ url_for('tasks_view', patient_id=patient.id) }}">✅ patientenspezifische Aufgaben</a>
-        <a href="{{ url_for('labs_view', patient_id=patient.id) }}"><span class="icon">🧪</span> Labore</a>
-        <a href="{{ url_for('patient_detail', patient_id=patient.id) }}">📄 Patientendetails</a>
-        <a href="{{ url_for('voice_doc') }}" class="btn-secondary">🎤 Sprachdokumentation</a>
-    </div>
-</div>
 
-<div class="container">
+{% include "_patient_tabs.html" %}
+
 
     {% if alerts %}
 <div class="alert-section">
@@ -44,7 +31,7 @@
 {% endif %}
 
 
-    <h2>Flowsheet – {{ patient.name }}</h2>
+    <h2>Flowsheet für {{ patient.name }}</h2>
 
     <hr><br>
 
@@ -297,7 +284,6 @@
 
    </form>
 
-    </div>
 
 <!-- ============ ALERT JAVASCRIPT (unchanged) ============ -->
 <script>
@@ -432,8 +418,11 @@ function closeGlobalAlert() {
 fetchAlerts();
 setInterval(fetchAlerts, 60000);
 </script>
+
+{% endblock %}
 
 </body>
+
 </html>
 
 

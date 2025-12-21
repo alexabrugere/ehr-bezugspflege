@@ -8,54 +8,15 @@
 </head>
 <body>
 
-{% if viewing_all_patients %}
-<div class="header">
-    <div class="header-title">
-        <span class="icon">✅</span>
-        <span>Alle Aufgaben</span>
-    </div>
-    <div class="nav-links">
-        {% if current_nurse %}
-            <span class="current-nurse-label">
-                👩‍⚕️ Eingeloggt als: {{ current_nurse["name"] }}
-            </span>
-        {% endif %}
-        <a href="{{ url_for('logout') }}">🚪 Abmelden</a>
-        <a href="{{ url_for('home') }}">🧑‍⚕️ Alle Patienten</a>
-        <a href="{{ url_for('voice_doc') }}" class="btn-secondary">🎤 Sprachdokumentation</a>
-    </div>
-</div>
-{% endif %}
+{% extends "base.html" %}
+{% block title %}Flowsheet{% endblock %}
+{% block content %}
+
 
 {% if selected_patient %}
-<div class="header">
-    <div class="header-title">
-        <span class="icon">✅</span>
-        <span>Aufgaben für {{ selected_patient.name }}</span>
-    </div>
-    <div class="nav-links">
-        {% if current_nurse %}
-            <span class="current-nurse-label">
-                👩‍⚕️ Eingeloggt als: {{ current_nurse["name"] }}
-            </span>
-        {% endif %}
-        <a href="{{ url_for('logout') }}">🚪 Abmelden</a>
-        <a href="{{ url_for('home') }}">🧑‍⚕️ Alle Patienten</a>
-        <a href="{{ url_for('voice_doc') }}" class="btn-secondary">🎤 Sprachdokumentation</a>
-        <a href="{{ url_for('labs_view', patient_id=selected_patient.id) }}">
-            <span class="icon">🧪</span> Labore
-        </a>
-        <a href="{{ url_for('patient_detail', patient_id=selected_patient.id) }}">
-            📄 Patientendetails
-        </a>
-        <a href="{{ url_for('flowsheet', patient_id=selected_patient.id) }}">
-            📈 Flowsheet
-        </a>
-    </div>
-</div>
+  {% include "_patient_tabs.html" %}
 {% endif %}
 
-<div class="container">
 
     {% if alerts %}
         <div class="alert-section">
@@ -69,7 +30,12 @@
         </div>
     {% endif %}
 
-    <h2>Aufgaben nach Patient</h2>
+    {% if viewing_all_patients %}
+<h2>Aufgaben für Alle</h2>
+{% endif %}
+{% if selected_patient %}
+    <h2>Aufgaben für {{ patient.name }}</h2>
+{% endif %}
 
     <!-- ========= AI-PFLEGEAUFGABEN ========= -->
     <section class="section-card">
@@ -320,8 +286,6 @@
             <p>Noch keine dokumentierten Medikamentengaben.</p>
         {% endif %}
 
-</div>
-
 <script>
 async function fetchAlerts() {
     try {
@@ -386,6 +350,8 @@ function closeGlobalAlert() {
 fetchAlerts();
 setInterval(fetchAlerts, 60000);
 </script>
+
+{% endblock %}
 
 </body>
 </html>

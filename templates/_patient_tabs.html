@@ -1,0 +1,15 @@
+{% if patient %}
+<nav class="patient-tabs" aria-label="Patient navigation">
+  <a class="tab {% if active_tab=='overview' %}active{% endif %}"
+     href="{{ url_for('patient_detail', patient_id=patient.id) }}">Übersicht</a>
+
+  <a class="tab {% if active_tab=='tasks' %}active{% endif %}"
+     href="{{ url_for('tasks_view', patient_id=patient.id) }}">Aufgaben</a>
+
+  <a class="tab {% if active_tab=='flowsheet' %}active{% endif %}"
+     href="{{ url_for('flowsheet', patient_id=patient.id) }}">Flowsheet</a>
+
+  <a class="tab {% if active_tab=='labs' %}active{% endif %}"
+     href="{{ url_for('labs_view', patient_id=patient.id) }}">Labore</a>
+</nav>
+{% endif %}

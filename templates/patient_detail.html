@@ -8,29 +8,13 @@
 </head>
 <body>
 
-    <!-- Hospital-style top bar -->
-<div class="header">
-    <div class="header-title">
-        <span>📄 Patientendetails – {{ patient.name }}</span>
-    </div>
-
-    <div class="nav-links">
-        {% if current_nurse %}
-            <span class="current-nurse-label">
-                👩‍⚕️ Eingeloggt als: {{ current_nurse["name"] }}
-            </span>
-        {% endif %}
-        <a href="{{ url_for('logout') }}">🚪 Abmelden</a>
-        <a href="{{ url_for('home') }}">🧑‍⚕️ Alle Patienten</a>
-        <a href="{{ url_for('tasks_view', patient_id=patient.id) }}">✅ patientenspezifische Aufgaben</a>
-        <a href="{{ url_for('labs_view', patient_id=patient.id) }}"><span class="icon">🧪</span> Labore</a>
-        <a href="{{ url_for('flowsheet', patient_id=patient.id) }}">📈 Flowsheet</a>
-        <a href="{{ url_for('voice_doc') }}" class="btn-secondary">🎤 Sprachdokumentation</a>
-    </div>
-</div>
+{% extends "base.html" %}
+{% block title %}Flowsheet{% endblock %}
+{% block content %}
 
 
-    <div class="container">
+{% include "_patient_tabs.html" %}
+
 
         {% if alerts %}
 <div class="alert-section">
@@ -268,7 +252,6 @@
 
         <a href="{{ url_for('home') }}" class="back-link">← Zurück zur Patientenliste</a>
 
-    </div>
 
     <!-- JS success popup after update -->
     <script>
@@ -348,6 +331,7 @@ fetchAlerts();
 setInterval(fetchAlerts, 60000);
 </script>
 
+{% endblock %}
 
 </body>
 </html>

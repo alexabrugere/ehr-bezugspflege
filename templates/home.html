@@ -8,23 +8,24 @@
 </head>
 <body>
 
-<div class="header">
-    <div class="header-title">
-        <span class="icon">🏥</span>
-        <span>EHR Kardio – Station</span>
-    </div>
 
-    <div class="nav-links">
-        {% if current_nurse %}
-            <span class="current-nurse-label">
-                👩‍⚕️ Eingeloggt als: {{ current_nurse["name"] }}
-            </span>
-        {% endif %}
-        <a href="{{ url_for('logout') }}">🚪 Abmelden</a>
-        <a href="{{ url_for('voice_doc') }}" class="btn-secondary">🎤 Sprachdokumentation</a>
-        <a href="{{ url_for('tasks_view') }}">✅ Alle Aufgaben</a>
-    </div>
+<div class="header">
+  <div class="header-title">
+    <span class="icon">🏥</span>
+    <span>EHR Kardio – Station</span>
+  </div>
+
+  <div class="nav-links">
+    {% if current_nurse %}
+      <span class="current-nurse-label">👩‍⚕️ {{ current_nurse["name"] }}</span>
+    {% endif %}
+    <a href="{{ url_for('home') }}">Home</a>
+    <a href="{{ url_for('tasks_view') }}">Aufgaben</a>
+    <a href="{{ url_for('voice_doc') }}">Sprachdoku</a>
+    <a href="{{ url_for('logout') }}">Logout</a>
+  </div>
 </div>
+
 
 
 <div class="container">

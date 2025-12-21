@@ -3,7 +3,7 @@ import sqlite3
 from pathlib import Path
 from werkzeug.utils import secure_filename
 from datetime import datetime, timedelta
-
+from urllib.parse import urlencode
 
 
 DB_PATH = Path("ehr_bezugspflege.db")
@@ -46,6 +46,27 @@ def get_current_nurse(conn=None):
         conn.close()
 
     return nurse
+
+
+def add_patient_tab(patient_id: int, patient_name: str, url: str):
+    tabs = session.get("patient_tabs", [])
+
+    # remove if already exists (so we can re-add to end = most recent)
+    tabs = [t for t in tabs if t.get("patient_id") != patient_id]
+
+    tabs.append({
+        "patient_id": patient_id,
+        "name": patient_name,
+        "url": url,   # where to go back to (last place)
+    })
+
+    # keep last 5 open patients
+    tabs = tabs[-5:]
+    session["patient_tabs"] = tabs
+
+def set_active_patient(patient_id: int):
+    session["active_patient_id"] = patient_id
+
 
 def get_med_interval_hours(schedule: str | None) -> int:
     if not schedule:
@@ -665,6 +686,10 @@ def flowsheet(patient_id):
     """, (patient_id,))
     recent_assessments = cur.fetchall()
 
+    if patient:
+        add_patient_tab(patient["id"], patient["name"], url_for("flowsheet", patient_id=patient["id"]))
+        set_active_patient(patient["id"])
+
     current_nurse = get_current_nurse(conn)
     conn.close()
 
@@ -674,6 +699,7 @@ def flowsheet(patient_id):
         patient=patient,
         recent_assessments=recent_assessments,
         current_nurse=current_nurse,
+        active_tab="flowsheet",
     )
 
 
@@ -799,6 +825,10 @@ def patient_detail(patient_id):
     """, (patient_id,))
     nurse_notes = cur.fetchall()
 
+    if patient:
+        add_patient_tab(patient["id"], patient["name"], url_for("patient_detail", patient_id=patient["id"]))
+        set_active_patient(patient["id"])
+
     cur.execute("""
         SELECT alert, severity, created_at
         FROM ai_alerts
@@ -822,6 +852,7 @@ def patient_detail(patient_id):
         orders=orders,
         doctor_notes=doctor_notes,
         nurse_notes=nurse_notes,
+        active_tab="overview",
     )
 
 
@@ -855,6 +886,11 @@ def tasks_view():
 
         viewing_all_patients = True
         selected_patient = None
+        patient = None
+
+    if patient_id:
+        cur.execute("SELECT * FROM patients WHERE id = ?;", (patient_id,))
+        patient = cur.fetchone()
 
     # ---------- AI tasks ----------
     if patient_id:
@@ -968,6 +1004,11 @@ def tasks_view():
            """, (patient_id,))
     alerts = cur.fetchall()
 
+    if selected_patient:
+        add_patient_tab(selected_patient["id"], selected_patient["name"],
+                        url_for("tasks_view", patient_id=selected_patient["id"]))
+        set_active_patient(selected_patient["id"])
+
     current_nurse = get_current_nurse(conn)
     conn.close()
 
@@ -980,6 +1021,8 @@ def tasks_view():
         patients=patients,
         viewing_all_patients=viewing_all_patients,
         selected_patient=selected_patient,
+        patient=patient,  # <-- add this
+        active_tab="tasks",
         ai_tasks_open=ai_tasks_open,
         ai_tasks_done=ai_tasks_done,
         orders_open=orders_open,
@@ -1118,6 +1161,10 @@ def labs_view():
         """, (patient_id,))
     alerts = cur.fetchall()
 
+    if patient:
+        add_patient_tab(patient["id"], patient["name"], url_for("labs_view", patient_id=patient["id"]))
+        set_active_patient(patient["id"])
+
     current_nurse = get_current_nurse(conn)
     conn.close()
 
@@ -1131,6 +1178,7 @@ def labs_view():
         patient_id=patient_id,
         recent_labs=recent_labs,
         pending_labs=pending_labs,
+        active_tab="labs",
     )
 
 
@@ -1608,6 +1656,23 @@ def api_patient_lookup():
         "name": row["name"],
         "patient_identifier": row["patient_identifier"],
     })
+
+@app.post("/ui/close_patient_tab")
+def close_patient_tab():
+    pid = request.form.get("patient_id", type=int)
+    tabs = session.get("patient_tabs", [])
+    tabs = [t for t in tabs if t.get("patient_id") != pid]
+    session["patient_tabs"] = tabs
+
+    if session.get("active_patient_id") == pid:
+        session.pop("active_patient_id", None)
+
+    return redirect(request.referrer or url_for("home"))
+
+@app.post("/ui/close_current_patient")
+def close_current_patient():
+    session.pop("active_patient_id", None)
+    return redirect(url_for("home"))
 
 
 
