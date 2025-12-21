@@ -1052,48 +1052,61 @@ select.mobile-input {
 }
 
 /* =========================
-   HOME PAGE: patient_right mobile layout
+   HOME PAGE (patient cards) — iPhone layout fix
    ========================= */
 @media (max-width: 700px) {
 
-  /* make the whole card stack nicer on mobile */
+  /* Make the whole card single-column on mobile */
   .patient-card-horizontal {
     grid-template-columns: 1fr;
     row-gap: 12px;
   }
 
-  /* make right side vertical (one column) */
-  .patient-right {
-    grid-template-columns: 1fr;
-    gap: 10px;
+  /* Keep avatar + name on one row */
+  .patient-left {
+    align-items: flex-start;
   }
 
-  /* field-row layout like your patient detail screenshot */
-  .patient-right .field-row {
+  /* IMPORTANT: stop the “one letter per line” behavior */
+  .patient-right,
+  .patient-right * {
+    word-break: normal !important;
+    overflow-wrap: break-word; /* wrap only when needed */
+    hyphens: auto;
+  }
+
+  /* Make the right side provide a clean vertical list */
+  .patient-right {
+    display: flex;            /* override grid */
+    flex-direction: column;
+    gap: 10px;
+    font-size: 0.95rem;
+  }
+
+  /* Each line becomes: label on left, value on right */
+  .patient-right > div {
     display: flex;
     justify-content: space-between;
+    align-items: flex-start;
     gap: 12px;
-    align-items: baseline;
   }
 
-  .patient-right .field-label {
-    flex: 0 0 45%;
-    font-weight: 700;
-    color: #374151;
+  .patient-right > div > strong {
+    flex: 0 0 44%;            /* label width */
+    white-space: normal;
   }
 
-  .patient-right .field-value {
-    flex: 1;
+  .patient-right > div:not(.patient-actions-row) {
+    /* value part aligns right and wraps nicely */
     text-align: right;
-    color: #111827;
-    overflow-wrap: anywhere; /* prevents cut-off on long text */
   }
 
-  /* buttons + priorities stack full width */
+  /* Buttons + priorities should stack full width */
   .patient-actions-row {
     flex-direction: column;
     align-items: stretch;
     gap: 10px;
+    margin-top: 8px;
   }
 
   .patient-actions-row .btn-primary,
@@ -1105,6 +1118,7 @@ select.mobile-input {
     width: 100%;
   }
 }
+
 
 
 
