@@ -1623,13 +1623,16 @@ def voice_doc():
         if saved_anything:
             conn.commit()
 
-
         conn.close()
         return redirect(url_for("tasks_view", patient_id=patient_id))
 
+    current_nurse = get_current_nurse(conn)
+    conn.close()
 
     conn.close()
-    return render_template("voice_doc.html")
+    return render_template("voice_doc.html",
+                current_nurse=current_nurse)
+
 
 
 @app.get("/api/patient_lookup")
