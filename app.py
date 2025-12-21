@@ -1526,14 +1526,13 @@ def voice_doc():
 
 
         # 2) save a nurse note (even if no task)
-        note_text = spoken_text or selected_text
-        if note_text:
+        if spoken_text:
             cur.execute("""
                 INSERT INTO nurse_notes (patient_id, note, created_at, author)
                 VALUES (?, ?, ?, ?);
             """, (
                 patient_id,
-                note_text,
+                spoken_text,
                 datetime.now().strftime("%Y-%m-%d %H:%M"),
                 author,
             ))

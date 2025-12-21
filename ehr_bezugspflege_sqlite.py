@@ -304,7 +304,7 @@ VALUES (?, ?, ?, ?);
 """, [
     (1, "PAT kurzatmig bei Belastung, O2 2l.", "2025-12-03 11:00", "Anna Müller"),
     (1, "Bilanz begonnen, Angehörige aufgeklärt.", "2025-12-03 15:30", "Anna Müller"),
-    (2, "Schmerzskala 2/10 in Ruhe, 4/10 bei Bewegung.", "2025-12-03 12:00", "Jonas Weber"),
+    (2, "Schmerzskala 5/10 in Ruhe, 7/10 bei Bewegung.", "2025-12-03 12:00", "Jonas Weber"),
 ])
 
 conn.commit()
