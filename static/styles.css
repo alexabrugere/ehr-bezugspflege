@@ -1051,53 +1051,61 @@ select.mobile-input {
   }
 }
 
-/* =========================================
-   HOME PAGE – Mobile layout improvements
-   Make patient_right fully vertical on phones
-   ========================================= */
+/* =========================
+   HOME PAGE: patient_right mobile layout
+   ========================= */
 @media (max-width: 700px) {
 
-  /* Make the whole patient card stack nicely */
+  /* make the whole card stack nicer on mobile */
   .patient-card-horizontal {
-    grid-template-columns: 1fr;      /* no left/right columns */
+    grid-template-columns: 1fr;
     row-gap: 12px;
   }
 
-  /* Keep left area (avatar + name) fine */
-  .patient-left {
-    align-items: center;
-  }
-
-  /* ✅ THIS is the key: patient_right becomes one vertical column */
+  /* make right side vertical (one column) */
   .patient-right {
-    grid-template-columns: 1fr;      /* instead of 1fr 1fr */
-    gap: 8px;
-    font-size: 0.95rem;
-  }
-
-  /* If you want label/value to look cleaner on mobile */
-  .patient-right > div {
-    line-height: 1.35;
-  }
-
-  /* Buttons stack full-width on mobile */
-  .patient-actions-row {
-    display: grid;
     grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  /* field-row layout like your patient detail screenshot */
+  .patient-right .field-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: baseline;
+  }
+
+  .patient-right .field-label {
+    flex: 0 0 45%;
+    font-weight: 700;
+    color: #374151;
+  }
+
+  .patient-right .field-value {
+    flex: 1;
+    text-align: right;
+    color: #111827;
+    overflow-wrap: anywhere; /* prevents cut-off on long text */
+  }
+
+  /* buttons + priorities stack full width */
+  .patient-actions-row {
+    flex-direction: column;
+    align-items: stretch;
     gap: 10px;
   }
 
   .patient-actions-row .btn-primary,
   .patient-actions-row .btn-secondary {
     width: 100%;
-    display: block;
   }
 
-  /* Priorities box should fill width */
   .priority-box {
     width: 100%;
   }
 }
+
 
 
 

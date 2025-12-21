@@ -77,16 +77,36 @@
         <!-- RIGHT: Clinical info + buttons + AI priorities -->
         <div class="patient-right">
             <!-- Row 1: Diagnose | DOB -->
-            <div><strong>Diagnose:</strong> {{ p.diagnosis or "—" }}</div>
-            <div><strong>Geburtsdatum:</strong> {{ p.dob or "—" }}</div>
+            <div class="field-row">
+              <span class="field-label">Diagnose</span>
+              <span class="field-value">{{ p.diagnosis or "—" }}</span>
+            </div>
 
-            <!-- Row 2: Primärarzt | Pflege -->
-            <div><strong>Primärarzt:</strong> {{ p.primary_doctor or "—" }}</div>
-            <div><strong>Bezugspflegeperson:</strong> {{ p.bezugspflege_name or "—" }}</div>
+            <div class="field-row">
+              <span class="field-label">Geburtsdatum</span>
+              <span class="field-value">{{ p.dob or "—" }}</span>
+            </div>
 
-            <!-- Row 3: Aufnahme | Entlassung -->
-            <div><strong>Aufnahme:</strong> {{ p.admission_date or "—" }}</div>
-            <div><strong>Entlassung:</strong> {{ p.expected_discharge or "—" }}</div>
+            <div class="field-row">
+              <span class="field-label">Primärarzt</span>
+              <span class="field-value">{{ p.primary_doctor or "—" }}</span>
+            </div>
+
+            <div class="field-row">
+              <span class="field-label">Bezugspflegeperson</span>
+              <span class="field-value">{{ p.bezugspflege_name or "—" }}</span>
+            </div>
+
+            <div class="field-row">
+              <span class="field-label">Aufnahme</span>
+              <span class="field-value">{{ p.admission_date or "—" }}</span>
+            </div>
+
+            <div class="field-row">
+              <span class="field-label">Entlassung</span>
+              <span class="field-value">{{ p.expected_discharge or "—" }}</span>
+            </div>
+
 
             <!-- Row 4: Flowsheet / Aufgaben / Labs / Prioritäten -->
             <div class="patient-actions-row" style="grid-column: 1 / span 2;">
