@@ -1161,15 +1161,6 @@ select.mobile-input {
   gap:10px;
 }
 
-.patient-tabs-scroll{
-  display:flex;
-  gap:8px;
-  overflow-x:auto;
-  -webkit-overflow-scrolling: touch;
-  flex:1;
-  padding-bottom:2px;
-}
-
 .patient-tab{
   display:flex;
   align-items:center;
