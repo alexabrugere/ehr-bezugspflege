@@ -1250,6 +1250,117 @@ select.mobile-input {
 }
 
 
+/* =====================================================
+   PATIENT TABS BAR (Compact – Mobile & Desktop)
+===================================================== */
+
+.patient-tabs-bar {
+  background: #0f2f4a;
+  border-top: 1px solid rgba(255,255,255,0.12);
+  padding: 4px 6px;                 /* ↓ smaller height */
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Scroll container */
+.patient-tabs-scroll {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  flex: 1;
+  padding-bottom: 2px;
+}
+
+/* Individual patient tab */
+.patient-tab {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255,255,255,0.10);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 999px;
+  padding: 4px 8px;                 /* ↓ slimmer pill */
+  white-space: nowrap;
+  height: 30px;                     /* consistent height */
+}
+
+/* Active tab */
+.patient-tab.active {
+  background: #e0f2fe;
+  border-color: #93c5fd;
+}
+
+/* Patient name */
+.patient-tab-link {
+  color: #dbeafe;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.8rem;                /* ↓ smaller text */
+  line-height: 1;
+}
+
+/* Active text color */
+.patient-tab.active .patient-tab-link {
+  color: #0f172a;
+}
+
+/* Close (X) form */
+.patient-tab-close-form {
+  margin: 0;
+}
+
+/* Close (X) button */
+.patient-tab-close {
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-size: 14px;                  /* ↓ smaller X */
+  line-height: 1;
+  padding: 0 2px;
+  cursor: pointer;
+}
+
+/* Exit / Close-current button */
+.patient-tab-exit-form {
+  margin-left: auto;
+}
+
+.patient-tab-exit {
+  background: transparent;
+  border: none;
+  font-size: 1.2rem;                /* ↓ smaller X */
+  font-weight: bold;
+  color: #dbeafe;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 6px;
+}
+
+.patient-tab-exit:hover {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+/* -----------------------------------------------------
+   Mobile fine-tuning (iPhone)
+----------------------------------------------------- */
+@media (max-width: 600px) {
+  .patient-tab {
+    padding: 4px 6px;
+    height: 28px;
+  }
+
+  .patient-tab-link {
+    font-size: 0.78rem;
+  }
+
+  .patient-tab-exit {
+    font-size: 1.1rem;
+    padding: 4px;
+  }
+}
 
 
 

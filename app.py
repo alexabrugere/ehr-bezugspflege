@@ -3,6 +3,7 @@ import sqlite3
 from pathlib import Path
 from werkzeug.utils import secure_filename
 from datetime import datetime, timedelta
+from urllib.parse import urlparse
 
 
 DB_PATH = Path("ehr_bezugspflege.db")
@@ -46,7 +47,6 @@ def get_current_nurse(conn=None):
 
     return nurse
 
-from urllib.parse import urlparse
 
 def _safe_referrer(default_endpoint="home"):
     ref = request.referrer

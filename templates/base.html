@@ -12,12 +12,12 @@
   <div class="header-title">
     <span class="icon">🏥</span>
     <span>EHR Kardio – Station</span>
-  </div>
-
-  <div class="nav-links">
     {% if current_nurse %}
       <span class="current-nurse-label">👩‍⚕️ {{ current_nurse["name"] }}</span>
     {% endif %}
+  </div>
+
+  <div class="nav-links">
     <a href="{{ url_for('home') }}">🏥 Home</a>
     <a href="{{ url_for('tasks_view') }}">Aufgaben für Alle</a>
     <a href="{{ url_for('voice_doc') }}">Sprachdoku</a>
