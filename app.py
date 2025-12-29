@@ -3,7 +3,6 @@ import sqlite3
 from pathlib import Path
 from werkzeug.utils import secure_filename
 from datetime import datetime, timedelta
-from urllib.parse import urlencode
 
 
 DB_PATH = Path("ehr_bezugspflege.db")
@@ -46,6 +45,43 @@ def get_current_nurse(conn=None):
         conn.close()
 
     return nurse
+
+from urllib.parse import urlparse
+
+def _safe_referrer(default_endpoint="home"):
+    ref = request.referrer
+    if not ref:
+        return url_for(default_endpoint)
+
+    # Only allow same-host redirects (avoid open-redirect issues)
+    try:
+        ref_host = urlparse(ref).netloc
+        my_host = urlparse(request.host_url).netloc
+        if ref_host and ref_host != my_host:
+            return url_for(default_endpoint)
+    except Exception:
+        return url_for(default_endpoint)
+
+    return ref
+
+def _referrer_is_patient_page_for(patient_id: int) -> bool:
+    ref = request.referrer or ""
+    # covers /patient/<id>/..., /patient/<id>, etc.
+    if f"/patient/{patient_id}" in ref:
+        return True
+    # covers pages like /tasks?patient_id=<id>, /labs?patient_id=<id>
+    if f"patient_id={patient_id}" in ref:
+        return True
+    return False
+
+def _get_tabs():
+    return session.get("patient_tabs", [])
+
+def _set_tabs(tabs):
+    session["patient_tabs"] = tabs
+
+def _set_active_patient_id(pid):
+    session["active_patient_id"] = pid
 
 
 def add_patient_tab(patient_id: int, patient_name: str, url: str):
@@ -1660,22 +1696,89 @@ def api_patient_lookup():
         "patient_identifier": row["patient_identifier"],
     })
 
-@app.post("/ui/close_patient_tab")
-def close_patient_tab():
-    pid = request.form.get("patient_id", type=int)
-    tabs = session.get("patient_tabs", [])
-    tabs = [t for t in tabs if t.get("patient_id") != pid]
-    session["patient_tabs"] = tabs
 
-    if session.get("active_patient_id") == pid:
+@app.post("/tabs/close")
+def close_patient_tab():
+    patient_id = int(request.form.get("patient_id", 0))
+    tabs = _get_tabs()
+    if not tabs:
+        return redirect(_safe_referrer())
+
+    # Remove the tab
+    new_tabs = [t for t in tabs if int(t.get("patient_id")) != patient_id]
+    _set_tabs(new_tabs)
+
+    active = session.get("active_patient_id")
+    closed_was_active = (active is not None and int(active) == patient_id)
+
+    # Decide new active if needed
+    if closed_was_active:
+        if new_tabs:
+            # pick the next tab (same index if possible)
+            try:
+                old_index = next(i for i, t in enumerate(tabs) if int(t.get("patient_id")) == patient_id)
+            except StopIteration:
+                old_index = 0
+            next_index = min(old_index, len(new_tabs) - 1)
+            new_active = int(new_tabs[next_index]["patient_id"])
+            _set_active_patient_id(new_active)
+        else:
+            session.pop("active_patient_id", None)
+
+    # Redirect logic:
+    # - If you're on a page that belongs to the patient you just closed, go to next patient (or Home)
+    # - Otherwise, stay where you are (referrer)
+    if _referrer_is_patient_page_for(patient_id):
+        if new_tabs:
+            # go to the active patient's last saved url
+            active_id = int(session.get("active_patient_id"))
+            active_tab = next((t for t in new_tabs if int(t.get("patient_id")) == active_id), None)
+            if active_tab and active_tab.get("url"):
+                return redirect(active_tab["url"])
+        return redirect(url_for("home"))
+
+    return redirect(_safe_referrer())
+
+
+@app.post("/tabs/close_current")
+def close_current_patient():
+    active = session.get("active_patient_id")
+    if not active:
+        return redirect(_safe_referrer())
+
+    patient_id = int(active)
+    tabs = _get_tabs()
+    if not tabs:
+        session.pop("active_patient_id", None)
+        return redirect(_safe_referrer())
+
+    # Remove active tab
+    new_tabs = [t for t in tabs if int(t.get("patient_id")) != patient_id]
+    _set_tabs(new_tabs)
+
+    # Pick next active
+    if new_tabs:
+        try:
+            old_index = next(i for i, t in enumerate(tabs) if int(t.get("patient_id")) == patient_id)
+        except StopIteration:
+            old_index = 0
+        next_index = min(old_index, len(new_tabs) - 1)
+        new_active = int(new_tabs[next_index]["patient_id"])
+        _set_active_patient_id(new_active)
+    else:
         session.pop("active_patient_id", None)
 
-    return redirect(request.referrer or url_for("home"))
+    # Same redirect rule as above
+    if _referrer_is_patient_page_for(patient_id):
+        if new_tabs:
+            active_id = int(session.get("active_patient_id"))
+            active_tab = next((t for t in new_tabs if int(t.get("patient_id")) == active_id), None)
+            if active_tab and active_tab.get("url"):
+                return redirect(active_tab["url"])
+        return redirect(url_for("home"))
 
-@app.post("/ui/close_current_patient")
-def close_current_patient():
-    session.pop("active_patient_id", None)
-    return redirect(url_for("home"))
+    return redirect(_safe_referrer())
+
 
 
 

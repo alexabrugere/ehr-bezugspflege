@@ -14,24 +14,12 @@
 </head>
 <body>
 
-<div class="header">
-  <div class="header-title">
-    <span class="icon">🏥</span>
-    <span>EHR Kardio – Station</span>
-  </div>
+{% extends "base.html" %}
+{% block title %}Flowsheet{% endblock %}
+{% block content %}
 
-  <div class="nav-links">
-    {% if current_nurse %}
-      <span class="current-nurse-label">👩‍⚕️ {{ current_nurse["name"] }}</span>
-    {% endif %}
-    <a href="{{ url_for('home') }}">Home</a>
-    <a href="{{ url_for('tasks_view') }}">Aufgaben für Alle</a>
-    <a href="{{ url_for('voice_doc') }}">Sprachdoku</a>
-    <a href="{{ url_for('logout') }}">Logout</a>
-  </div>
-</div>
 
-<div class="container container-mobile">
+{% include "_patient_tabs.html" %}
 
   <div class="section-card mobile-card">
 
@@ -117,8 +105,6 @@
       </p>
     </form>
   </div>
-  </div>
-
 
 <script>
 function fillPhrase(text) {
@@ -255,7 +241,7 @@ function initScanner() {
 }
 </script>
 
-
+{% endblock %}
 
 </body>
 </html>
