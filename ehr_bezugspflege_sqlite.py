@@ -255,11 +255,11 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 """, [
     ("P-100001", "Maria Koch", "F", "1980-03-14", "3B",
      "Herzinsuffizienz NYHA III", 1,
-     "Penicillin, Latex", "DNAR", "2025-11-30", "2025-12-07", "Dr. Keller"),
+     "Penicillin, Latex", "Keine Reha", "2025-11-30", "2025-12-07", "Dr. Keller"),
 
     ("P-100002", "Rolf Braun", "M", "1972-08-09", "3C",
      "NSTEMI", 2,
-     "Keine bekannten Allergien", "Full Code", "2025-12-01", "2025-12-05", "Dr. Roth"),
+     "Keine bekannten Allergien", "nicht festgelegt", "2025-12-01", "2025-12-05", "Dr. Roth"),
 ])
 
 # Meds for patient 1

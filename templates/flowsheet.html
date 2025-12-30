@@ -37,7 +37,7 @@
     <hr><br>
 
     <!-- ================= LAST 5 ASSESSMENTS (VITALS – HORIZONTAL TABLE) ================= -->
-   <h2>Letzte 5 Einschätzungen</h2>
+   <h3>Letzte 5 Einschätzungen</h3>
 
 {% if recent_assessments %}
 <div class="vitals-history-card">
@@ -220,14 +220,13 @@
     </table>
 </div>
 {% else %}
-    <p>Noch keine Einschätzungen vorhanden.</p>
 {% endif %}
 
 
     <br><hr><br>
 
     <!-- ================= FLOWSHEET ENTRY FORM ================= -->
-    <h2>Neue Einschätzung hier oder mit dem Messungsgerät dokumentieren </h2>
+    <h3>Neue Einschätzung hier oder mit dem Messungsgerät dokumentieren </h3>
 
     <form action="{{ url_for('flowsheet', patient_id=patient.id) }}" method="POST">
 
@@ -275,9 +274,20 @@
         </div>
             </div>
 
+        <br>
 
-
-    <br><hr><br>
+        <div>
+        <table>
+            <tbody>
+         <tr>
+               <td class="system-label">Weitere Bemerkungen</td>
+               <td>
+                   <textarea id="other_notes" name="other_notes" rows="2" class="flowsheet-input"></textarea>
+               </td>
+           </tr>
+       </tbody>
+   </table>
+</div>
 
 
 <button type="submit" class="btn-primary">Einschätzung speichern</button>
