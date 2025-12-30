@@ -18,7 +18,7 @@
 
   <div class="nav-links">
     {% if current_nurse %}
-      <a class="nav-pill" href="{{ url_for('logout') }}">Logout</a>
+      <a class="nav-pill" href="{{ url_for('logout') }}">Abmelden</a>
     {% endif %}
   </div>
 </div>
@@ -48,7 +48,7 @@
         {% endfor %}
       </select>
 
-      <button type="submit" class="btn-primary btn-full">Einloggen</button>
+      <button type="submit" class="btn-primary btn-full">Anmelden</button>
       <p class="mobile-hint">Tipp: Auf dem iPhone ist die Auswahl am bequemsten im Vollbild.</p>
     </form>
   </div>

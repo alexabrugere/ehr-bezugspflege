@@ -7,9 +7,12 @@
      href="{{ url_for('tasks_view', patient_id=patient.id) }}">Aufgaben</a>
 
   <a class="tab {% if active_tab=='flowsheet' %}active{% endif %}"
-     href="{{ url_for('flowsheet', patient_id=patient.id) }}">Flowsheet</a>
+     href="{{ url_for('flowsheet', patient_id=patient.id) }}">Kurve</a>
 
   <a class="tab {% if active_tab=='labs' %}active{% endif %}"
-     href="{{ url_for('labs_view', patient_id=patient.id) }}">Labore</a>
+     href="{{ url_for('labs_view', patient_id=patient.id) }}">Labor</a>
 </nav>
+
+<br>
 {% endif %}
+
