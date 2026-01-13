@@ -24,7 +24,7 @@
             {% for a in alerts %}
                 <div class="alert-box {{ a.severity }}">
                     <strong>{{ a.severity | upper }}</strong>: {{ a.alert }}
-                    <div class="alert-time">{{ a["created_at"].replace("T", " ") }}</div>
+                    <div class="alert-time">{{ a["created_at"]| format_dt }}</div>
                 </div>
             {% endfor %}
         </div>
@@ -60,7 +60,7 @@
                         <tr>
                             <td>{{ t.patient_name }}</td>
                             <td>{{ t.description }}</td>
-                            <td>{{ t.due_time .replace("T", " ") or "Nächste Schicht" }}</td>
+                            <td>{{ t.due_time | format_dt or "Nächste Schicht" }}</td>
                             <td>
                                 <form method="POST" action="{{ url_for('toggle_task', task_id=t.id, task_type='ai') }}">
                                     <input type="checkbox" name="done" onchange="this.form.submit()">
@@ -93,7 +93,7 @@
                         <tr class="task-completed">
                             <td>{{ t.patient_name }}</td>
                             <td>{{ t.description }}</td>
-                            <td>{{ t.due_time .replace("T", " ") or "Nächste Schicht" }}</td>
+                            <td>{{ t.due_time | format_dt or "Nächste Schicht" }}</td>
                             <td>
                                 <form method="POST" action="{{ url_for('toggle_task', task_id=t.id, task_type='ai') }}">
                                     <input type="checkbox" name="done" onchange="this.form.submit()" checked>
@@ -130,7 +130,7 @@
                         <tr>
                             <td>{{ o["patient_name"] }}</td>
                             <td>{{ o["description"] }}</td>
-                            <td>{{ o["due_date"].replace("T", " ") or "—" }}</td>
+                            <td>{{ o["due_date"]| format_dt or "—" }}</td>
                             <td>
                                 <form method="POST" action="{{ url_for('toggle_task', task_id=o['id'], task_type='order') }}">
                                     <input type="checkbox" onchange="this.form.submit()">
@@ -162,7 +162,7 @@
                         <tr class="task-completed">
                             <td>{{ o["patient_name"] }}</td>
                             <td>{{ o["description"] }}</td>
-                            <td>{{ o["due_date"].replace("T", " ") or "—" }}</td>
+                            <td>{{ o["due_date"] | format_dt or "—" }}</td>
                             <td>
                                 <form method="POST" action="{{ url_for('toggle_task', task_id=o['id'], task_type='order') }}">
                                     <input type="checkbox" onchange="this.form.submit()" checked>
@@ -199,7 +199,7 @@
                 <tr>
                     <td>{{ m["patient_name"] }}</td>
                     <td>{{ m["name"] }} {{ m["dose"] }} {{ m["route"] }}</td>
-                    <td>{{ m["next_due"].replace("T", " ") or "—" }}</td>
+                    <td>{{ m["next_due"]| format_dt or "—" }}</td>
                     <td class="cell-center">
                 <!-- GEGEBEN -->
                 <form method="POST"

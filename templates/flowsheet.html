@@ -25,7 +25,7 @@
     {% for a in alerts %}
         <div class="alert-box {{ a.severity }}">
             <strong>{{ a.severity | upper }}</strong>: {{ a.alert }}
-            <div class="alert-time">{{ a["created_at"].replace("T", " ") }}</div>
+            <div class="alert-time">{{ a["created_at"]| format_dt }}</div>
         </div>
     {% endfor %}
 </div>
@@ -46,7 +46,7 @@
             <tr>
                 <th>Parameter</th>
                 {% for a in recent_assessments %}
-                    <th>{{ a["created_at"].replace("T", " ") }}</th>
+                    <th>{{ a["created_at"]| format_dt }}</th>
                 {% endfor %}
             </tr>
         </thead>
@@ -137,7 +137,7 @@
             <tr>
                 <th>Parameter</th>
                 {% for a in recent_assessments %}
-                    <th>{{ a["created_at"].replace("T", " ") }}</th>
+                    <th>{{ a["created_at"]| format_dt }}</th>
                 {% endfor %}
             </tr>
         </thead>

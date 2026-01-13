@@ -23,7 +23,7 @@
     {% for a in alerts %}
         <div class="alert-box {{ a.severity }}">
             <strong>{{ a.severity | upper }}</strong>: {{ a.alert }}
-            <div class="alert-time">{{ a["created_at"].replace("T", " ") }}</div>
+            <div class="alert-time">{{ a["created_at"] | format_dt }}</div>
         </div>
     {% endfor %}
 </div>
@@ -50,7 +50,7 @@
                     <tr>
                         <td>{{ o["name"] }}</td>
                         <td>{{ o["priority"] }}</td>
-                        <td>{{ o["ordered_at"]| replace("T", " ") }}</td>
+                        <td>{{ o["ordered_at"]| format_dt }}</td>
                     </tr>
                 {% endfor %}
             </tbody>

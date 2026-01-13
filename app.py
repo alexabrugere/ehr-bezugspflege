@@ -4,6 +4,7 @@ from pathlib import Path
 from werkzeug.utils import secure_filename
 from datetime import datetime, timedelta
 from urllib.parse import urlparse
+from zoneinfo import ZoneInfo
 
 
 DB_PATH = Path("ehr_bezugspflege.db")
@@ -46,6 +47,11 @@ def get_current_nurse(conn=None):
         conn.close()
 
     return nurse
+
+LOCAL_TZ = ZoneInfo("Europe/Berlin")
+
+def now_local():
+    return datetime.now(LOCAL_TZ)
 
 
 def _safe_referrer(default_endpoint="home"):
@@ -199,7 +205,7 @@ def generate_ai_alerts(conn, patient_id):
         cur.execute("""
             INSERT INTO ai_alerts (patient_id, alert, severity, created_at)
             VALUES (?, ?, ?, ?);
-        """, (patient_id, text, severity, datetime.now().isoformat(timespec="minutes")))
+        """, (patient_id, text, severity, now_local().isoformat(timespec="minutes")))
 
     conn.commit()
 
@@ -373,7 +379,7 @@ def generate_priorities_and_tasks(conn, patient_id: int) -> None:
 
         for desc in task_descriptions:
             interval_hours = get_default_interval_hours(desc)
-            next_due = datetime.now() + timedelta(hours=interval_hours)
+            next_due = now_local() + timedelta(hours=interval_hours)
             next_due_str = next_due.isoformat(timespec="minutes")
 
             # Clear old AI tasks
@@ -629,7 +635,7 @@ def flowsheet(patient_id):
                 musculoskeletal, neuro, gastro, other_notes
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
-            patient_id, datetime.now().isoformat(timespec="minutes"),
+            patient_id, now_local().isoformat(timespec="minutes"),
             get_current_nurse(conn)["name"] if get_current_nurse(conn) else "unbekannt",
             temperature, heart_rate, respiration_rate,
             systolic_bp, diastolic_bp,oxygen_sat,
@@ -692,7 +698,7 @@ def flowsheet(patient_id):
             """, (
                 patient_id,
                 notes.strip(),
-                datetime.now().strftime("%Y-%m-%d %H:%M"),
+                now_local().strftime("%Y-%m-%d %H:%M"),
                 author
             ))
 
@@ -1094,7 +1100,7 @@ def ensure_standard_vitals_tasks(conn, patient_id: int):
             cur.execute("""
                 INSERT INTO ai_tasks (patient_id, description, due_time, completed)
                 VALUES (?, ?, ?, 0);
-            """, (patient_id, desc, datetime.now().isoformat(timespec="minutes")))
+            """, (patient_id, desc, now_local().isoformat(timespec="minutes")))
 
 
 
@@ -1124,7 +1130,7 @@ def labs_view():
                 lab_name,
                 priority,
                 "Ausstehend",
-                datetime.now().isoformat(timespec="minutes"),
+                now_local().isoformat(timespec="minutes"),
             ))
             conn.commit()
 
@@ -1168,7 +1174,7 @@ def labs_view():
     pending_labs = cur.fetchall()
 
     # 3) Recent labs (last 5 days)
-    five_days_ago = (datetime.now() - timedelta(days=5)).isoformat(timespec="minutes")
+    five_days_ago = (now_local() - timedelta(days=5)).isoformat(timespec="minutes")
 
     if patient_id:
         cur.execute("""
@@ -1290,9 +1296,9 @@ def toggle_task(task_id):
                     try:
                         base_due = datetime.fromisoformat(due_time_str)
                     except ValueError:
-                        base_due = datetime.now()
+                        base_due = now_local()
                 else:
-                    base_due = datetime.now()
+                    base_due = now_local()
 
                 if not completed:
                     # mark done
@@ -1328,7 +1334,7 @@ def toggle_task(task_id):
                     """, (
                         patient_id,
                         description,
-                        due_time_str or datetime.now().isoformat(timespec="minutes"),
+                        due_time_str or now_local().isoformat(timespec="minutes"),
                     ))
 
         # ---------------- ORDERS (simple status toggle) ----------------
@@ -1375,7 +1381,7 @@ def toggle_task(task_id):
             next_due_str = med["next_due"]
 
             # ---- parse base time (for calculating the next due) ----
-            base_due = datetime.now()
+            base_due = now_local()
             if next_due_str:
                 try:
                     # full timestamp "YYYY-MM-DD HH:MM" or ISO
@@ -1394,14 +1400,14 @@ def toggle_task(task_id):
                     base_due = datetime.now()
 
             interval_hours = get_med_interval_hours(schedule)
-            base_due_str_for_delete = next_due_str or datetime.now().isoformat(timespec="minutes")
+            base_due_str_for_delete = next_due_str or now_local().isoformat(timespec="minutes")
 
             # --------- ACTION: GEGEBEN ---------
             if action == "given":
                 if not given:
                     # mark THIS dose as given
                     last_by = current_nurse["name"] if current_nurse else None
-                    last_at = datetime.now().strftime("%Y-%m-%d %H:%M")
+                    last_at = now_local().strftime("%Y-%m-%d %H:%M")
 
                     cur.execute("""
                         UPDATE medications
@@ -1457,7 +1463,7 @@ def toggle_task(task_id):
                 if not not_given:
                     # mark THIS dose as not given (but still documented)
                     last_by = current_nurse["name"] if current_nurse else None
-                    last_at = datetime.now().strftime("%Y-%m-%d %H:%M")
+                    last_at = now_local().strftime("%Y-%m-%d %H:%M")
 
                     cur.execute("""
                         UPDATE medications
@@ -1617,7 +1623,7 @@ def voice_doc():
             """, (
                 patient_id,
                 spoken_text,
-                datetime.now().strftime("%Y-%m-%d %H:%M"),
+                now_local().strftime("%Y-%m-%d %H:%M"),
                 author,
             ))
             saved_anything = True
@@ -1628,7 +1634,7 @@ def voice_doc():
                 VALUES (?, ?, ?);
             """, (
                 patient_id,
-                datetime.now().isoformat(timespec="minutes"),
+                now_local().isoformat(timespec="minutes"),
                 ""  # keep empty; the note is already in nurse_notes
             ))
 
@@ -1651,7 +1657,7 @@ def voice_doc():
             """, (
                 patient_id,
                 task_desc,
-                datetime.now().isoformat(timespec="minutes"),
+                now_local().isoformat(timespec="minutes"),
             ))
             saved_anything = True
 
@@ -1779,7 +1785,15 @@ def close_current_patient():
 
     return redirect(_safe_referrer())
 
-
+@app.template_filter("format_dt")
+def format_dt(value):
+    if not value:
+        return "–"
+    try:
+        dt = datetime.fromisoformat(value)
+        return dt.astimezone(LOCAL_TZ).strftime("%d.%m.%Y %H:%M")
+    except:
+        return value
 
 
 # ---------------------------------------------------------

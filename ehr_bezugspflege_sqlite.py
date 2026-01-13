@@ -255,11 +255,11 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 """, [
     ("P-100001", "Maria Koch", "F", "1980-03-14", "3B",
      "Herzinsuffizienz NYHA III", 1,
-     "Penicillin, Latex", "Keine Reha", "2025-11-30", "2025-12-07", "Dr. Keller"),
+     "Penicillin, Latex", "Keine Reha", "2026-01-13", "2026-01-25", "Dr. Keller"),
 
     ("P-100002", "Rolf Braun", "M", "1972-08-09", "3C",
      "NSTEMI", 2,
-     "Keine bekannten Allergien", "nicht festgelegt", "2025-12-01", "2025-12-05", "Dr. Roth"),
+     "Keine bekannten Allergien", "nicht festgelegt", "2026-01-13", "2026-01-20", "Dr. Roth"),
 ])
 
 # Meds for patient 1
@@ -267,8 +267,8 @@ cur.executemany("""
 INSERT INTO medications (patient_id, name, dose, route, schedule, next_due, due_time)
 VALUES (?, ?, ?, ?, ?, ?, ?);
 """, [
-    (1, "Bisoprolol", "2.5 mg", "p.o.", "1x morgens", "2025-12-09 08:00", "2025-12-09 08:00"),
-    (1, "Furosemid", "20 mg", "i.v.", "2x täglich", "2025-12-09 08:00", "2025-12-09 14:00"),
+    (1, "Bisoprolol", "2.5 mg", "p.o.", "1x morgens", "2026-01-13 08:00", "2026-01-13 08:00"),
+    (1, "Furosemid", "20 mg", "i.v.", "2x täglich", "2026-01-13 08:00", "2026-01-13 14:00"),
 ])
 
 # Meds for patient 2
@@ -284,9 +284,9 @@ cur.executemany("""
 INSERT INTO orders (patient_id, description, due_date, due_time, status, ordered_by, type)
 VALUES (?, ?, ?, ?, ?, ?, ?);
 """, [
-    (1, "Gewichts-kontrolle täglich", "2025-12-04", "2025-12-04 08:00", "offen", "Dr. Keller", "Anordnung"),
-    (1, "Bilanz ausführen", "2025-12-04", "2025-12-04 20:00", "offen", "Dr. Keller", "Pflegeaufgabe"),
-    (2, "Belastungs-EKG", "2025-12-05", "2025-12-05 10:00", "geplant", "Dr. Roth", "Diagnostik"),
+    (1, "Gewichts-kontrolle täglich", "2026-01-13", "2025-12-04 08:00", "offen", "Dr. Keller", "Anordnung"),
+    (1, "Bilanz ausführen", "2026-01-13", "2026-01-13 20:00", "offen", "Dr. Keller", "Pflegeaufgabe"),
+    (2, "Belastungs-EKG", "2026-01-13", "2026-13-01 10:00", "geplant", "Dr. Roth", "Diagnostik"),
 ])
 
 # Notes
@@ -294,17 +294,17 @@ cur.executemany("""
 INSERT INTO doctor_notes (patient_id, note, created_at, author)
 VALUES (?, ?, ?, ?);
 """, [
-    (1, "Klinisch kompensiert, Diuretika angepasst.", "2025-12-03 10:15", "Dr. Keller"),
-    (2, "Post-NSTEMI, Verlauf stabil, Echo morgen.", "2025-12-03 09:40", "Dr. Roth"),
+    (1, "Klinisch kompensiert, Diuretika angepasst.", "2026-01-13 10:15", "Dr. Keller"),
+    (2, "Post-NSTEMI, Verlauf stabil, Echo morgen.", "2026-01-13 09:40", "Dr. Roth"),
 ])
 
 cur.executemany("""
 INSERT INTO nurse_notes (patient_id, note, created_at, author)
 VALUES (?, ?, ?, ?);
 """, [
-    (1, "PAT kurzatmig bei Belastung, O2 2l.", "2025-12-03 11:00", "Anna Müller"),
-    (1, "Bilanz begonnen, Angehörige aufgeklärt.", "2025-12-03 15:30", "Anna Müller"),
-    (2, "Schmerzskala 5/10 in Ruhe, 7/10 bei Bewegung.", "2025-12-03 12:00", "Jonas Weber"),
+    (1, "PAT kurzatmig bei Belastung, O2 2l.", "2026-01-13 11:00", "Anna Müller"),
+    (1, "Bilanz begonnen, Angehörige aufgeklärt.", "2026-01-13 15:30", "Anna Müller"),
+    (2, "Schmerzskala 5/10 in Ruhe, 7/10 bei Bewegung.", "2026-01-13 12:00", "Jonas Weber"),
 ])
 
 conn.commit()
