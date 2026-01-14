@@ -1710,20 +1710,21 @@ def voice_doc():
             ensure_standard_vitals_tasks(conn, patient["id"])
             conn.commit()
 
+        # 3) optionally create completed tasks from MULTIPLE selected phrases (one per line)
+        lines = [ln.strip() for ln in selected_text.splitlines() if ln.strip()]
 
-        # 3) optionally create a completed task from the dropdown phrase mapping
-        task_desc = map_selected_phrase_to_task(selected_text)
-        if task_desc:
-            cur.execute("""
-                INSERT INTO ai_tasks (patient_id, description, due_time, completed)
-                VALUES (?, ?, ?, 1);
-            """, (
-                patient_id,
-                task_desc,
-                now_local().isoformat(timespec="minutes"),
-            ))
-            saved_anything = True
-
+        for line in lines:
+            task_desc = map_selected_phrase_to_task(line)
+            if task_desc:
+                cur.execute("""
+                    INSERT INTO ai_tasks (patient_id, description, due_time, completed)
+                    VALUES (?, ?, ?, 1);
+                """, (
+                    patient_id,
+                    task_desc,
+                    now_local().isoformat(timespec="minutes"),
+                ))
+                saved_anything = True
 
         if saved_anything:
             conn.commit()
