@@ -276,7 +276,7 @@ cur.executemany("""
 INSERT INTO medications (patient_id, name, dose, route, schedule, next_due, due_time)
 VALUES (?, ?, ?, ?, ?, ?, ?);
 """, [
-    (2, "ASS", "100 mg", "p.o.", "1x morgens", "2025-12-9 08:00", "2025-12-09 08:00"),
+    (1, "ASS", "100 mg", "p.o.", "1x morgens", "2026-01-13 08:00", "2026-01-13 08:00"),
 ])
 
 # Orders/tasks
