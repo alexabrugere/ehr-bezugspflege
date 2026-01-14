@@ -282,18 +282,41 @@ def extract_problems_from_nurse_notes(conn, patient_id: int) -> list[str]:
 
     return list(set(found_problems))  # avoid duplicates
 
+PRIORITY_WEIGHTS = {
+    # A / B
+    "Hypoxie-Risiko / O₂-Überwachung": 1,
+    "Atemnot / eingeschränkter Gasaustausch": 1,
+
+    # C
+    "Hypotonie – Kreislauf instabil": 2,
+    "Tachykardie / Kreislaufbelastung": 2,
+
+    # D
+    "Akute Verwirrtheit / Delirrisiko": 3,
+
+    # E / Safety
+    "Infektionsrisiko": 4,
+    "Sturz- und Dekubitusrisiko": 4,
+
+    # Symptoms
+    "Schmerzen": 5,
+
+    # Fallback
+    "Allgemeines Monitoring / Stabilisierung": 99,
+}
+
 
 def generate_priorities_and_tasks(conn, patient_id: int) -> None:
     """
-    Rule-based 'mini AI':
-    - Looks at latest assessment
-    - Generates up to 3 priority problems
-    - Creates nursing tasks based on these problems
+    Accumulative, ABC-prioritized nursing problem generator.
+    Problems persist over time and are reordered by clinical priority.
     """
     conn.row_factory = sqlite3.Row
     cur = conn.cursor()
 
-    # Latest assessment
+    # -------------------------------------------------
+    # Latest assessment (if exists)
+    # -------------------------------------------------
     cur.execute("""
         SELECT *
         FROM assessments
@@ -302,43 +325,81 @@ def generate_priorities_and_tasks(conn, patient_id: int) -> None:
         LIMIT 1;
     """, (patient_id,))
     a = cur.fetchone()
-    if not a:
-        return
 
-    problems = []
+    # -------------------------------------------------
+    # Load existing priorities (accumulative model)
+    # -------------------------------------------------
+    cur.execute("""
+        SELECT problem
+        FROM patient_priorities
+        WHERE patient_id = ?
+        ORDER BY priority_rank;
+    """, (patient_id,))
+    problems = [r["problem"] for r in cur.fetchall()]
 
+    # -------------------------------------------------
+    # Add problems from spoken nurse notes
+    # -------------------------------------------------
     spoken_problems = extract_problems_from_nurse_notes(conn, patient_id)
-
     for p in spoken_problems:
         if p not in problems:
             problems.append(p)
 
+    # -------------------------------------------------
+    # Add problems from latest flowsheet (if available)
+    # -------------------------------------------------
+    if a:
+        # Pain
+        if a["pain"] is not None and a["pain"] >= 7:
+            if "Schmerzen" not in problems:
+                problems.append("Schmerzen")
 
-    # Symptom scales
-    if a["pain"] is not None and a["pain"] >= 7:
-        problems.append("Starke Schmerzen")
-    if a["mobility"] is not None and a["mobility"] <= 3:
-        problems.append("Sturz- und Dekubitusrisiko")
-    if a["confusion"] is not None and a["confusion"] >= 6:
-        problems.append("Akute Verwirrtheit / Delirrisiko")
+        # Mobility / fall risk
+        if a["mobility"] is not None and a["mobility"] <= 3:
+            if "Sturz- und Dekubitusrisiko" not in problems:
+                problems.append("Sturz- und Dekubitusrisiko")
 
-    # Vital signs
-    if a["oxygen_sat"] is not None and a["oxygen_sat"] < 92:
-        problems.append("Hypoxie-Risiko / O₂-Überwachung")
-    if a["heart_rate"] is not None and a["heart_rate"] > 110:
-        problems.append("Tachykardie / Kreislaufbelastung")
-    if a["systolic_bp"] is not None and a["systolic_bp"] < 90:
-        problems.append("Hypotonie – Kreislauf instabil")
+        # Confusion
+        if a["confusion"] is not None and a["confusion"] >= 6:
+            if "Akute Verwirrtheit / Delirrisiko" not in problems:
+                problems.append("Akute Verwirrtheit / Delirrisiko")
 
+        # Oxygen
+        if a["oxygen_sat"] is not None and a["oxygen_sat"] < 92:
+            if "Hypoxie-Risiko / O₂-Überwachung" not in problems:
+                problems.append("Hypoxie-Risiko / O₂-Überwachung")
 
-    # Fallback
+        # Heart rate
+        if a["heart_rate"] is not None and a["heart_rate"] > 110:
+            if "Tachykardie / Kreislaufbelastung" not in problems:
+                problems.append("Tachykardie / Kreislaufbelastung")
+
+        # Blood pressure
+        if a["systolic_bp"] is not None and a["systolic_bp"] < 90:
+            if "Hypotonie – Kreislauf instabil" not in problems:
+                problems.append("Hypotonie – Kreislauf instabil")
+
+        # Temperature
+        if a["temperature"] is not None and a["temperature"] > 38.5:
+            if "Infektionsrisiko" not in problems:
+                problems.append("Infektionsrisiko")
+
+    # -------------------------------------------------
+    # Fallback (only if NOTHING exists)
+    # -------------------------------------------------
     if not problems:
         problems.append("Allgemeines Monitoring / Stabilisierung")
 
-    # Take only top 3
+    # -------------------------------------------------
+    # ABC PRIORITIZATION
+    # -------------------------------------------------
+    problems = list(dict.fromkeys(problems))  # remove duplicates, keep order
+    problems.sort(key=lambda p: PRIORITY_WEIGHTS.get(p, 50))
     problems = problems[:3]
 
-    # Clear old priorities
+    # -------------------------------------------------
+    # Persist priorities
+    # -------------------------------------------------
     cur.execute("DELETE FROM patient_priorities WHERE patient_id = ?;", (patient_id,))
     for rank, prob in enumerate(problems, start=1):
         cur.execute("""
@@ -346,35 +407,35 @@ def generate_priorities_and_tasks(conn, patient_id: int) -> None:
             VALUES (?, ?, ?);
         """, (patient_id, rank, prob))
 
-
+    # -------------------------------------------------
+    # Generate tasks (idempotent)
+    # -------------------------------------------------
     for prob in problems:
-        if "Atemnot" in prob or "Hypoxie" in prob:
+        if "Hypoxie" in prob or "Atemnot" in prob:
             task_descriptions = [
-                "Vitalzeiche-kontrolle 2h dokumentieren",
-                "Oberkörper-hoch-lagerung, atemerleichternde Positionierung",
+                "SpO₂ & AF alle 2h dokumentieren",
+                "Oberkörperhochlagerung"
             ]
-        elif "Schmerzen" in prob:
+        elif "Hypotonie" in prob or "Tachykardie" in prob:
             task_descriptions = [
-                "Schmerzskala alle 4h erheben",
+                "RR & Puls alle 2h kontrollieren"
             ]
-        elif "Sturz" in prob or "Dekubitus" in prob:
+        elif "Sturz" in prob:
             task_descriptions = [
                 "Lagerung alle 2h dokumentieren",
-                "Sturzrisiko einschätzen",
+                "Sturzrisiko einschätzen"
             ]
         elif "Verwirrtheit" in prob:
             task_descriptions = [
-                "Orientierungs-hilfen (Kalender, Uhr, Angehörige) bereitstellen",
+                "Orientierungshilfen bereitstellen"
             ]
-        elif "Hypotonie" in prob:
+        elif "Schmerzen" in prob:
             task_descriptions = [
-                "Vitalzeichen-kontrolle alle 2h kontrollieren",
+                "Schmerzskala alle 4h erheben"
             ]
         else:
             task_descriptions = [
-                "Vitalzeichen-kontrolle nach Standard",
-                "Schmerzen täglich nachfragen",
-                "Gewicht täglich messen"
+                "Vitalzeichen nach Standard kontrollieren"
             ]
 
         for desc in task_descriptions:
@@ -382,13 +443,13 @@ def generate_priorities_and_tasks(conn, patient_id: int) -> None:
             next_due = now_local() + timedelta(hours=interval_hours)
             next_due_str = next_due.isoformat(timespec="minutes")
 
-            # Clear old AI tasks
+            # prevent duplicates
             cur.execute("""
-                    DELETE FROM ai_tasks
-                    WHERE patient_id = ?
-                      AND completed = 0
-                      AND description = ?;
-                """, (patient_id, desc))
+                DELETE FROM ai_tasks
+                WHERE patient_id = ?
+                  AND completed = 0
+                  AND description = ?;
+            """, (patient_id, desc))
 
             cur.execute("""
                 INSERT INTO ai_tasks (patient_id, description, due_time, completed)
@@ -397,6 +458,8 @@ def generate_priorities_and_tasks(conn, patient_id: int) -> None:
 
     generate_ai_alerts(conn, patient_id)
     conn.commit()
+
+
 
 # ---------------------------------------------------------
 # Spoken / narrative triggers for priorities
