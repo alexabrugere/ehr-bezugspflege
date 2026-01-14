@@ -698,7 +698,7 @@ def flowsheet(patient_id):
             """, (
                 patient_id,
                 notes.strip(),
-                now_local().strftime("%Y-%m-%d %H:%M"),
+                now_local().isoformat(timespec="minutes"),
                 author
             ))
 
