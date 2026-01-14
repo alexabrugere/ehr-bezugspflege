@@ -237,7 +237,7 @@
         {% for n in nurse_notes %}
             <li class="note-item">
                 <div class="note-meta">
-                    <span class="note-time">{{ n["created_at"]| format_dt }}</span>
+                    <span class="note-time">{{ n["created_at"] }}</span>
                     <span class="note-author">{{ n["author"] }}</span>
                 </div>
                 <div class="note-text">
