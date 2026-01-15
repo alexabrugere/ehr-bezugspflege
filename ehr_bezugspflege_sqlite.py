@@ -44,7 +44,6 @@ def next_time_today_or_tomorrow(hour: int, minute: int = 0) -> datetime:
         t = t + timedelta(days=1)
     return t
 
-
 # ----------------------------
 # Tables (same schema you use)
 # ----------------------------
@@ -443,17 +442,23 @@ INSERT INTO nurse_notes (patient_id, note, created_at, author)
 VALUES (?, ?, ?, ?);
 """, nurse_notes)
 
-# Seed standard vital signs task for each patient (due in 2 hours)
 cur.execute("SELECT id FROM patients;")
 patient_ids = [r[0] for r in cur.fetchall()]
 
 due = (datetime.now() + timedelta(hours=0)).isoformat(timespec="minutes")
 
+standard_tasks = [
+    "Vitalzeichen nach Standard",
+    "Schmerzen täglich nachfragen",
+    "Gewicht täglich messen",
+]
+
 for pid in patient_ids:
-    cur.execute("""
-        INSERT INTO ai_tasks (patient_id, description, due_time, completed)
-        VALUES (?, ?, ?, 0);
-    """, (pid, "Vitalzeichen nach Standard", due))
+    for desc in standard_tasks:
+        cur.execute("""
+            INSERT INTO ai_tasks (patient_id, description, due_time, completed)
+            VALUES (?, ?, ?, 0);
+        """, (pid, desc, due))
 
 conn.commit()
 conn.close()

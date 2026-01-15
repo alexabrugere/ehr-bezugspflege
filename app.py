@@ -563,7 +563,7 @@ def update_bezugspflege_by_interactions(conn, patient_id: int) -> None:
 
 def ensure_standard_vitals_tasks(conn):
     """
-    Ensures each patient has at least one open 'Vitalzeichen nach Standard' task.
+    Ensures each patient has at least one open standard task.
     Safe to run repeatedly (won't create duplicates).
     """
     cur = conn.cursor()
@@ -571,26 +571,34 @@ def ensure_standard_vitals_tasks(conn):
     cur.execute("SELECT id FROM patients;")
     patient_ids = [r["id"] for r in cur.fetchall()]
 
-    due = (now_local() + timedelta(hours=2)).isoformat(timespec="minutes")
+    due = (now_local() + timedelta(hours=0)).isoformat(timespec="minutes")
+
+    standard_tasks = [
+        "Vitalzeichen nach Standard",
+        "Schmerzen täglich nachfragen",
+        "Gewicht täglich messen",
+    ]
 
     for pid in patient_ids:
-        cur.execute("""
-            SELECT 1
-            FROM ai_tasks
-            WHERE patient_id = ?
-              AND description = ?
-              AND completed = 0
-            LIMIT 1;
-        """, (pid, "Vitalzeichen nach Standard"))
-        exists = cur.fetchone()
-
-        if not exists:
+        for desc in standard_tasks:
             cur.execute("""
-                INSERT INTO ai_tasks (patient_id, description, due_time, completed)
-                VALUES (?, ?, ?, 0);
-            """, (pid, "Vitalzeichen nach Standard", due))
+                SELECT 1
+                FROM ai_tasks
+                WHERE patient_id = ?
+                  AND description = ?
+                  AND completed = 0
+                LIMIT 1;
+            """, (pid, desc))
+            exists = cur.fetchone()
+
+            if not exists:
+                cur.execute("""
+                    INSERT INTO ai_tasks (patient_id, description, due_time, completed)
+                    VALUES (?, ?, ?, 0);
+                """, (pid, desc, due))
 
     conn.commit()
+
 
 
 def compute_patient_alerts():
@@ -798,6 +806,8 @@ def flowsheet(patient_id):
         gastro = request.form.get("gastro") or ""
         notes = request.form.get("other_notes") or ""
 
+
+
         cur.execute("""
             INSERT INTO assessments (
                 patient_id, created_at, author,
@@ -817,47 +827,48 @@ def flowsheet(patient_id):
             musculoskeletal, neuro, gastro, notes
         ))
 
-        cur.execute("""
-               UPDATE ai_tasks
-               SET completed = 1
-               WHERE patient_id = ?
-                 AND description LIKE '%Vitalzeichen%';
-           """, (patient_id,))
+        # ----------------------------
+        # Mark tasks completed ONLY if the matching field was charted
+        # (use exact descriptions to avoid accidental matches)
+        # ----------------------------
 
-        cur.execute("""
-               UPDATE ai_tasks
-               SET completed = 1
-               WHERE patient_id = ?
-                 AND description LIKE '%Schmerz%';
-           """, (patient_id,))
+        charted_weight = (weight is not None)
+        charted_pain = (pain is not None)
 
-        cur.execute("""
-               UPDATE ai_tasks
-               SET completed = 1
-               WHERE patient_id = ?
-                 AND description LIKE '%Sturzrisiko%';
-           """, (patient_id,))
+        # Only count these as "Vitalzeichen" (NOT weight/pain)
+        charted_any_vitals = any(v is not None for v in [
+            temperature, heart_rate, respiration_rate,
+            systolic_bp, diastolic_bp, oxygen_sat
+        ])
 
-        cur.execute("""
-              UPDATE ai_tasks
-              SET completed = 1
-              WHERE patient_id = ?
-                AND description LIKE '%Orientierungshilfen%';
-          """, (patient_id,))
+        if charted_any_vitals:
+            cur.execute("""
+                UPDATE ai_tasks
+                SET completed = 1
+                WHERE patient_id = ?
+                  AND completed = 0
+                  AND description = 'Vitalzeichenkontrolle nach Standard';
+            """, (patient_id,))
 
-        cur.execute("""
-              UPDATE ai_tasks
-              SET completed = 1
-              WHERE patient_id = ?
-                AND description LIKE '%Oberkörperhochlagerung%';
-          """, (patient_id,))
+        if charted_pain:
+            cur.execute("""
+                UPDATE ai_tasks
+                SET completed = 1
+                WHERE patient_id = ?
+                  AND completed = 0
+                  AND description = 'Schmerzen täglich nachfragen';
+            """, (patient_id,))
 
-        cur.execute("""
-                      UPDATE ai_tasks
-                      SET completed = 1
-                      WHERE patient_id = ?
-                        AND description LIKE '%Gewicht%';
-                  """, (patient_id,))
+        if charted_weight:
+            cur.execute("""
+                UPDATE ai_tasks
+                SET completed = 1
+                WHERE patient_id = ?
+                  AND completed = 0
+                  AND description = 'Gewicht täglich messen';
+            """, (patient_id,))
+
+        conn.commit()
 
         # 🔴 Write wichtige Beobachtungen auch als pflegerische Notiz
         # write important flowsheet notes into nurse_notes
@@ -928,6 +939,7 @@ def home():
         return redirect(url_for("select_nurse"))
 
     conn = get_connection()
+    ensure_standard_vitals_tasks(conn)
     cur = conn.cursor()
 
     cur.execute("""
@@ -981,6 +993,7 @@ def patient_detail(patient_id):
     conn = get_connection()
     cur = conn.cursor()
 
+    
 
     cur.execute("""
         SELECT 
@@ -1248,35 +1261,6 @@ def tasks_view():
         med_history=med_history
         # if you already pass alerts, keep that here too
     )
-
-def ensure_standard_vitals_tasks(conn, patient_id: int):
-    cur = conn.cursor()
-
-    standard_tasks = [
-        "Vitalzeichen nach Standard",
-        "Schmerzen täglich nachfragen",
-        "Gewicht täglich messen",
-    ]
-
-    for desc in standard_tasks:
-        cur.execute("""
-            SELECT 1
-            FROM ai_tasks
-            WHERE patient_id = ?
-              AND description = ?
-              AND completed = 0
-            LIMIT 1;
-        """, (patient_id, desc))
-        exists = cur.fetchone()
-
-        if not exists:
-            # due_time now = "planned immediately"
-            cur.execute("""
-                INSERT INTO ai_tasks (patient_id, description, due_time, completed)
-                VALUES (?, ?, ?, 0);
-            """, (patient_id, desc, now_local().isoformat(timespec="minutes")))
-
-
 
 @app.route("/labs", methods=["GET", "POST"])
 def labs_view():
@@ -1819,9 +1803,6 @@ def voice_doc():
 
             # 3) Now priorities/tasks/alerts can run (because a latest assessment exists)
             generate_priorities_and_tasks(conn, patient_id)
-            conn.commit()
-
-            ensure_standard_vitals_tasks(conn, patient["id"])
             conn.commit()
 
         # 3) optionally create completed tasks from MULTIPLE selected phrases (one per line)

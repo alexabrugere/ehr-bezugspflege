@@ -11,19 +11,22 @@
 <div class="header">
   <div class="header-title">
     <span class="icon">🏥</span>
-    <span>Kardio Station</span>
-    {% if current_nurse %}
-      <span class="current-nurse-label">👩‍⚕️ {{ current_nurse["name"] }}</span>
-    {% endif %}
-  </div>
-
+    <div class="nav-links"><a href="{{ url_for('home') }}">
+      Kardio Station
+      </a>
+      </div>
   <div class="nav-links">
-    <a href="{{ url_for('home') }}">🏠Start</a>
     <a href="{{ url_for('tasks_view') }}">✅Aufgaben</a>
     <a href="{{ url_for('voice_doc') }}">🗣️Sprachdoku</a>
-    <a href="{{ url_for('logout') }}">🚪Abmelden</a>
   </div>
+    {% if current_nurse %}
+    <span class="current-nurse-label">
+      <a href="{{ url_for('logout') }}">👩‍⚕️ {{ current_nurse["name"] }}
+      </a>
+      </span>
+    {% endif %}
 </div>
+  </div>
 
 {% set tabs = session.get("patient_tabs", []) %}
 {% if tabs %}
