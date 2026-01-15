@@ -1300,7 +1300,7 @@ select.mobile-input {
 
 .patient-tab-exit {
   position: relative;
-  top: -4px;
+  top: -5px;
   background: transparent;
   border: none;
   font-size: 1.2rem;                /* ↓ smaller X */
