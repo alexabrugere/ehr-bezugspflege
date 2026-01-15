@@ -267,15 +267,26 @@ body {
   font-size: 1.5rem;
 }
 
-.badge-room {
+.avatar-relative {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.badge-room-avatar {
+  position: absolute;
+  bottom: -6px;
+  right: -10px;
   background: #e0f2fe;
   color: #1d4ed8;
   padding: 2px 8px;
   border-radius: 999px;
-  font-size: 0.8rem;
-  margin-left: 5px;
-  margin-right: -55px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
 }
+
 
 /* --------------------------------------------------------
    FORMS
@@ -1352,6 +1363,7 @@ select.mobile-input {
     padding: 4px;
   }
 }
+
 
 
 

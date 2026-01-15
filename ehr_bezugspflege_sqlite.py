@@ -283,7 +283,7 @@ patients = [
      "Penicillin, Latex", "Keine Reha/Intub", dt_days_ago(3), dt_days_from_now(3), "Dr. Keller"),
     ("P-100002", "Sarah Schulz",     "F", "1972-08-09", "1B", "NSTEMI", 2,
      "Keine", "nicht festgelegt", dt_days_ago(2), dt_days_from_now(2), "Dr. Roth"),
-    ("P-100003", "Rolf Neumann",    "M", "1968-11-22", "2A", "Vorhofflimmern", 3,
+    ("P-100003", "Rolf Schwarz",    "M", "1968-11-22", "2A", "Vorhofflimmern", 3,
      "Jod", "nicht festgelegt", dt_days_ago(5), dt_days_from_now(2), "Dr. Klein"),
     ("P-100004", "Jan Fischer",   "M", "1959-05-18", "2B", "Herzinsuffizienz", 1,
      "Keine", "Alles gewünscht", dt_days_ago(4), dt_days_from_now(4), "Dr. Keller"),
