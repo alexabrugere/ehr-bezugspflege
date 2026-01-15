@@ -268,13 +268,13 @@ body {
 }
 
 .badge-room {
-  display: inline-block;
   background: #e0f2fe;
   color: #1d4ed8;
   padding: 2px 8px;
   border-radius: 999px;
   font-size: 0.8rem;
-  margin-left: 6px;
+  margin-left: 5px;
+  margin-right: -55px;
 }
 
 /* --------------------------------------------------------
