@@ -1293,35 +1293,21 @@ select.mobile-input {
   color: #0f172a;
 }
 
-/* Close (X) form */
-.patient-tab-close-form {
-  margin: 0;
-}
-
-/* Close (X) button */
-.patient-tab-close {
-  border: none;
-  background: transparent;
-  color: inherit;
-  font-size: 14px;                  /* ↓ smaller X */
-  line-height: 1;
-  padding: 0 2px;
-  cursor: pointer;
-}
-
 /* Exit / Close-current button */
 .patient-tab-exit-form {
   margin-left: auto;
 }
 
 .patient-tab-exit {
+  position: relative;
+  top: -4px;
   background: transparent;
   border: none;
   font-size: 1.2rem;                /* ↓ smaller X */
   font-weight: bold;
   color: #dbeafe;
   cursor: pointer;
-  padding: 4px 6px;
+  padding: 18px 6px;
   border-radius: 6px;
 }
 
@@ -1502,6 +1488,15 @@ select.mobile-input {
   }
 }
 
+/* Darker X when tab is active */
+.patient-tab.active .patient-tab-exit{
+  color: #1f2937;            /* dark gray */
+}
+
+.patient-tab.active .patient-tab-exit:hover {
+  background: #fee2e2;
+  color: #b91c1c;
+}
 
 
 
