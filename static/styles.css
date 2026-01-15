@@ -1248,11 +1248,15 @@ select.mobile-input {
 /* Scroll container */
 .patient-tabs-scroll {
   display: flex;
-  gap: 6px;
+  flex-direction: row;
+  gap: 8px;
   overflow-x: auto;
+  overflow-y: hidden;
+  white-space: nowrap;
+  flex-wrap: nowrap;
   -webkit-overflow-scrolling: touch;
-  flex: 1;
-  padding-bottom: 2px;
+  align-item: center;
+  max-height: 44px;
 }
 
 /* Individual patient tab */
