@@ -30,7 +30,7 @@
                          alt="Patientenfoto"
                          class="patient-avatar-img">
                 {% else %}
-                    <div class="patient-avatar-large avatar-relative"">
+                    <div class="patient-avatar-large avatar-relative">
                         {% if p.gender == 'F' %}
                             👩
                         {% elif p.gender == 'M' %}
@@ -42,8 +42,6 @@
                     </div>
                 {% endif %}
             </div>
-
-
 
             <div class="patient-name-block">
                 <a href="{{ url_for('patient_detail', patient_id=p.id) }}" class="patient-name">
