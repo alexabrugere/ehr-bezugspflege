@@ -1657,6 +1657,16 @@ def toggle_task(task_id):
                         base_due_str_for_delete,
                     ))
 
+        cur.execute("""
+            INSERT INTO med_administrations (patient_id, med_id, nurse_id, given_at)
+            VALUES (?, ?, ?, ?);
+        """, (
+            med["patient_id"],
+            med["id"],
+            session.get("current_nurse_id"),
+            datetime.now().isoformat(timespec="minutes"),
+        ))
+
         update_bezugspflege_by_interactions(conn, med["patient_id"])
 
         conn.commit()
