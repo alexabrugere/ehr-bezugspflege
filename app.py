@@ -384,6 +384,11 @@ def generate_priorities_and_tasks(conn, patient_id: int) -> None:
             if "Infektionsrisiko" not in problems:
                 problems.append("Infektionsrisiko")
 
+        # Breathing
+        if a["respiration_rate"] is not None and a["respiration_rate"] > 20:
+            if "Atemnot / eingeschränkter Gasaustausch" not in problems:
+                problems.append("Atemnot / eingeschränkter Gasaustausch")
+
     # -------------------------------------------------
     # Fallback (only if NOTHING exists)
     # -------------------------------------------------
@@ -480,6 +485,43 @@ SPOKEN_PRIORITY_KEYWORDS = {
     "verwirrt": "Akute Verwirrtheit / Delirrisiko",
     "delir": "Akute Verwirrtheit / Delirrisiko",
 }
+
+def complete_and_schedule_next(conn, patient_id: int, desc_exact: str, interval_hours: int):
+    """
+    Completes the open task with description == desc_exact, then inserts the next occurrence.
+    Safe: only triggers if an open one exists.
+    """
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT id
+        FROM ai_tasks
+        WHERE patient_id = ?
+          AND description = ?
+          AND completed = 0
+        ORDER BY datetime(due_time) ASC
+        LIMIT 1;
+    """, (patient_id, desc_exact))
+    row = cur.fetchone()
+    if not row:
+        return
+
+    # complete ALL open duplicates of the same description
+    cur.execute("""
+        UPDATE ai_tasks
+        SET completed = 1
+        WHERE patient_id = ?
+          AND description = ?
+          AND completed = 0;
+    """, (patient_id, desc_exact))
+
+    # schedule next
+    next_due = now_local() + timedelta(hours=interval_hours)
+    cur.execute("""
+        INSERT INTO ai_tasks (patient_id, description, due_time, completed)
+        VALUES (?, ?, ?, 0);
+    """, (patient_id, desc_exact, next_due.isoformat(timespec="minutes")))
+
 
 def update_bezugspflege_by_interactions(conn, patient_id: int) -> None:
     """
@@ -841,32 +883,34 @@ def flowsheet(patient_id):
             systolic_bp, diastolic_bp, oxygen_sat
         ])
 
+        def is_filled(x):
+            return x is not None and str(x).strip() != ""
+
+        charted_any_vitals = any(is_filled(v) for v in [
+            temperature, heart_rate, respiration_rate,
+            systolic_bp, diastolic_bp, oxygen_sat
+        ])
+
         if charted_any_vitals:
             cur.execute("""
                 UPDATE ai_tasks
                 SET completed = 1
                 WHERE patient_id = ?
                   AND completed = 0
-                  AND description = 'Vitalzeichenkontrolle nach Standard';
+                  AND (
+                      description LIKE '%Vitalzeichen%'
+                      OR description LIKE '%RR%'
+                      OR description LIKE '%SpO2%'
+                      OR description LIKE '%Puls%'
+                      OR description LIKE '%AF%'
+                  );
             """, (patient_id,))
 
         if charted_pain:
-            cur.execute("""
-                UPDATE ai_tasks
-                SET completed = 1
-                WHERE patient_id = ?
-                  AND completed = 0
-                  AND description = 'Schmerzen täglich nachfragen';
-            """, (patient_id,))
+            complete_and_schedule_next(conn, patient_id, "Schmerzen täglich nachfragen", 24)
 
         if charted_weight:
-            cur.execute("""
-                UPDATE ai_tasks
-                SET completed = 1
-                WHERE patient_id = ?
-                  AND completed = 0
-                  AND description = 'Gewicht täglich messen';
-            """, (patient_id,))
+            complete_and_schedule_next(conn, patient_id, "Gewicht täglich messen", 24)
 
         conn.commit()
 

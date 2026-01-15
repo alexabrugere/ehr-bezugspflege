@@ -433,7 +433,7 @@ VALUES (?, ?, ?, ?);
 nurse_notes = [
     (1, "Patient kurzatmig bei Belastung, O₂ 2l.", iso_minutes(now_dt() - timedelta(hours=5)), "Anna Müller"),
     (1, "Bilanz begonnen, Angehörige aufgeklärt.", iso_minutes(now_dt() - timedelta(hours=2)), "Anna Müller"),
-    (2, "Schmerz 2/10 in Ruhe, 4/10 bei Bewegung.", iso_minutes(now_dt() - timedelta(hours=4)), "Jonas Weber"),
+    (2, "Kurzatmigkeit bei Bewegung.", iso_minutes(now_dt() - timedelta(hours=4)), "Jonas Weber"),
     (4, "Ödeme an Unterschenkeln, Haut gespannt.", iso_minutes(now_dt() - timedelta(hours=3)), "Lisa Schmidt"),
     (8, "Husten produktiv, Sättigung schwankt.", iso_minutes(now_dt() - timedelta(hours=1)), "Jonas Weber"),
 ]
