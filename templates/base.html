@@ -8,25 +8,24 @@
 </head>
 <body>
 
-<div class="header">
+<div class="header header-mobile">
   <div class="header-title">
     <span class="icon">🏥</span>
-    <div class="nav-links"><a href="{{ url_for('home') }}">
-      Kardio Station
-      </a>
-      </div>
+    <a class="station-link" href="{{ url_for('home') }}">Kardio Station</a>
+
   <div class="nav-links">
-    <a href="{{ url_for('tasks_view') }}">✅Aufgaben</a>
-    <a href="{{ url_for('voice_doc') }}">🗣️Sprachdoku</a>
-  </div>
+    <a href="{{ url_for('tasks_view') }}">✅ Aufgaben</a>
+    <a href="{{ url_for('voice_doc') }}">🗣️ Sprachdoku</a>
+
     {% if current_nurse %}
-    <span class="current-nurse-label">
-      <a href="{{ url_for('logout') }}">👩‍⚕️ {{ current_nurse["name"] }}
+      <a class="current-nurse-label" href="{{ url_for('logout') }}">
+        👩‍⚕️ {{ current_nurse["name"] }}
       </a>
-      </span>
     {% endif %}
-</div>
+    </div>
   </div>
+</div>
+
 
 {% set tabs = session.get("patient_tabs", []) %}
 {% if tabs %}

@@ -1447,6 +1447,60 @@ select.mobile-input {
   }
 }
 
+.station-link{
+  color: #dbeafe;
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.station-link:hover{
+  text-decoration: underline;
+}
+
+.header{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.nav-links{
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;              /* allows nice wrapping on small screens */
+  justify-content: flex-end;
+}
+
+.current-nurse-label{
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(224,242,254,0.18);
+  border: 1px solid rgba(191,219,254,0.35);
+  color: #dbeafe;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+/* Mobile: keep header compact */
+@media (max-width: 600px){
+  .header{
+    align-items: flex-start;
+  }
+  .header-title{
+    flex: 0 0 auto;
+  }
+  .nav-links{
+    gap: 10px;
+  }
+  .nav-links a{
+    font-size: 0.92rem;
+    white-space: nowrap;
+  }
+}
 
 
 
