@@ -17,6 +17,10 @@ cur = conn.cursor()
 def now_dt():
     return datetime.now()
 
+def now_local_iso_minutes():
+    # if you already have now_local() in app.py, here we keep it simple:
+    return datetime.now().isoformat(timespec="minutes")
+
 def iso_minutes(dt: datetime) -> str:
     return dt.replace(second=0, microsecond=0).isoformat(timespec="minutes")
 
@@ -39,6 +43,7 @@ def next_time_today_or_tomorrow(hour: int, minute: int = 0) -> datetime:
     if t <= now_dt():
         t = t + timedelta(days=1)
     return t
+
 
 # ----------------------------
 # Tables (same schema you use)
@@ -437,6 +442,18 @@ cur.executemany("""
 INSERT INTO nurse_notes (patient_id, note, created_at, author)
 VALUES (?, ?, ?, ?);
 """, nurse_notes)
+
+# Seed standard vital signs task for each patient (due in 2 hours)
+cur.execute("SELECT id FROM patients;")
+patient_ids = [r[0] for r in cur.fetchall()]
+
+due = (datetime.now() + timedelta(hours=0)).isoformat(timespec="minutes")
+
+for pid in patient_ids:
+    cur.execute("""
+        INSERT INTO ai_tasks (patient_id, description, due_time, completed)
+        VALUES (?, ?, ?, 0);
+    """, (pid, "Vitalzeichen nach Standard", due))
 
 conn.commit()
 conn.close()

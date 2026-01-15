@@ -435,7 +435,7 @@ def generate_priorities_and_tasks(conn, patient_id: int) -> None:
             ]
         else:
             task_descriptions = [
-                "Vitalzeichen nach Standard kontrollieren"
+                "Vitalzeichen nach Standard"
             ]
 
         for desc in task_descriptions:
@@ -558,6 +558,37 @@ def update_bezugspflege_by_interactions(conn, patient_id: int) -> None:
         SET bezugspflege_id = ?
         WHERE id = ?;
     """, (chosen, patient_id))
+
+    conn.commit()
+
+def ensure_standard_vitals_tasks(conn):
+    """
+    Ensures each patient has at least one open 'Vitalzeichen nach Standard' task.
+    Safe to run repeatedly (won't create duplicates).
+    """
+    cur = conn.cursor()
+
+    cur.execute("SELECT id FROM patients;")
+    patient_ids = [r["id"] for r in cur.fetchall()]
+
+    due = (now_local() + timedelta(hours=2)).isoformat(timespec="minutes")
+
+    for pid in patient_ids:
+        cur.execute("""
+            SELECT 1
+            FROM ai_tasks
+            WHERE patient_id = ?
+              AND description = ?
+              AND completed = 0
+            LIMIT 1;
+        """, (pid, "Vitalzeichen nach Standard"))
+        exists = cur.fetchone()
+
+        if not exists:
+            cur.execute("""
+                INSERT INTO ai_tasks (patient_id, description, due_time, completed)
+                VALUES (?, ?, ?, 0);
+            """, (pid, "Vitalzeichen nach Standard", due))
 
     conn.commit()
 
@@ -845,8 +876,8 @@ def flowsheet(patient_id):
             ))
 
         conn.commit()
-        generate_priorities_and_tasks(conn, patient_id)
         update_bezugspflege_by_interactions(conn, patient_id)
+        generate_priorities_and_tasks(conn, patient_id)
         conn.close()
         return redirect(url_for("flowsheet", patient_id=patient_id))
 
@@ -1222,7 +1253,7 @@ def ensure_standard_vitals_tasks(conn, patient_id: int):
     cur = conn.cursor()
 
     standard_tasks = [
-        "Vitalzeichen-kontrolle nach Standard",
+        "Vitalzeichen nach Standard",
         "Schmerzen täglich nachfragen",
         "Gewicht täglich messen",
     ]
@@ -1656,18 +1687,6 @@ def toggle_task(task_id):
                         schedule,
                         base_due_str_for_delete,
                     ))
-
-        cur.execute("""
-            INSERT INTO med_administrations (patient_id, med_id, nurse_id, given_at)
-            VALUES (?, ?, ?, ?);
-        """, (
-            med["patient_id"],
-            med["id"],
-            session.get("current_nurse_id"),
-            datetime.now().isoformat(timespec="minutes"),
-        ))
-
-        update_bezugspflege_by_interactions(conn, med["patient_id"])
 
         conn.commit()
         return redirect(request.referrer or url_for("tasks_view"))
