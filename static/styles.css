@@ -1395,6 +1395,90 @@ select.mobile-input {
   }
 }
 
+/* =========================
+   PATIENT PAGE TOP TABS (Übersicht, Aufgaben, Kurve, Labor)
+   Make them compact and fit on iPhone
+   ========================= */
+@media (max-width: 600px) {
+  .patient-tabs {
+    gap: 6px;
+    padding: 6px 8px;
+    margin: 8px 0 10px 0;
+    overflow-x: hidden;     /* no horizontal scroll */
+    flex-wrap: wrap;        /* allow 2 rows if needed */
+    justify-content: flex-start;
+  }
+
+  .patient-tabs .tab {
+    padding: 6px 10px;
+    font-size: 0.85rem;
+    border-radius: 999px;
+  }
+}
+
+/* =========================
+   PATIENT DETAIL HEADER (Photo + Title + Key Info)
+   Mobile: integrated + compact
+   ========================= */
+@media (max-width: 600px) {
+
+  /* Put photo + title next to each other, not huge stacked spacing */
+  .patient-header-block {
+    display: grid;
+    grid-template-columns: 84px 1fr;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+
+  /* Smaller photo container */
+  .patient-photo-container {
+    width: 84px;
+    height: 84px;
+    border-radius: 12px;
+  }
+
+  .patient-photo-placeholder {
+    font-size: 40px;
+    border-radius: 12px;
+  }
+
+  /* Title smaller so it doesn't push everything down */
+  .patient-header-title {
+    font-size: 1.25rem;
+    line-height: 1.2;
+    margin: 0 0 6px 0;
+  }
+
+  /* Make the key-value list vertical + tight */
+  .clinical-summary-grid {
+    grid-template-columns: 1fr;  /* stack rows */
+    gap: 8px;
+  }
+
+  .field-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    align-items: baseline;
+  }
+
+  .field-label {
+    font-size: 0.95rem;
+  }
+
+  .field-value {
+    font-size: 0.95rem;
+    text-align: right;
+    max-width: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .patient-photo-overlay {
+    display: none;
+  }
+}
 
 
 
