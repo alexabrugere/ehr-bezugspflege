@@ -481,6 +481,85 @@ SPOKEN_PRIORITY_KEYWORDS = {
     "delir": "Akute Verwirrtheit / Delirrisiko",
 }
 
+def update_bezugspflege_by_interactions(conn, patient_id: int) -> None:
+    """
+    Sets patients.bezugspflege_id to the nurse with the highest interaction score.
+    Uses:
+      - nurse_notes.author (name)
+      - assessments.author (name)
+      - med_administrations.nurse_id (id)
+    """
+
+    conn.row_factory = sqlite3.Row
+    cur = conn.cursor()
+
+    # --- Get nurses map: name -> id (so we can convert author strings to nurse_id) ---
+    cur.execute("SELECT id, name FROM nurses;")
+    nurses = cur.fetchall()
+    name_to_id = {n["name"]: n["id"] for n in nurses}
+
+    scores: dict[int, int] = {}
+
+    def add_score(nurse_id: int | None, points: int):
+        if not nurse_id:
+            return
+        scores[nurse_id] = scores.get(nurse_id, 0) + points
+
+    # --- Nurse notes (author is a name string) ---
+    cur.execute("""
+        SELECT author, COUNT(*) AS c
+        FROM nurse_notes
+        WHERE patient_id = ?
+        GROUP BY author;
+    """, (patient_id,))
+    for r in cur.fetchall():
+        nurse_id = name_to_id.get((r["author"] or "").strip())
+        add_score(nurse_id, points=2 * int(r["c"] or 0))
+
+    # --- Assessments (author is a name string) ---
+    cur.execute("""
+        SELECT author, COUNT(*) AS c
+        FROM assessments
+        WHERE patient_id = ?
+        GROUP BY author;
+    """, (patient_id,))
+    for r in cur.fetchall():
+        nurse_id = name_to_id.get((r["author"] or "").strip())
+        add_score(nurse_id, points=1 * int(r["c"] or 0))
+
+    # --- Med administrations (already has nurse_id) ---
+    cur.execute("""
+        SELECT nurse_id, COUNT(*) AS c
+        FROM med_administrations
+        WHERE patient_id = ?
+        GROUP BY nurse_id;
+    """, (patient_id,))
+    for r in cur.fetchall():
+        add_score(r["nurse_id"], points=1 * int(r["c"] or 0))
+
+    if not scores:
+        return  # nobody documented yet → don't change anything
+
+    # Winner = highest score; tie-breaker = keep current bezugspflege if tied
+    cur.execute("SELECT bezugspflege_id FROM patients WHERE id = ?;", (patient_id,))
+    current_id = cur.fetchone()["bezugspflege_id"]
+
+    best_score = max(scores.values())
+    winners = [nid for nid, sc in scores.items() if sc == best_score]
+
+    if current_id in winners:
+        chosen = current_id
+    else:
+        chosen = winners[0]
+
+    # Update patient
+    cur.execute("""
+        UPDATE patients
+        SET bezugspflege_id = ?
+        WHERE id = ?;
+    """, (chosen, patient_id))
+
+    conn.commit()
 
 
 def compute_patient_alerts():
@@ -767,6 +846,7 @@ def flowsheet(patient_id):
 
         conn.commit()
         generate_priorities_and_tasks(conn, patient_id)
+        update_bezugspflege_by_interactions(conn, patient_id)
         conn.close()
         return redirect(url_for("flowsheet", patient_id=patient_id))
 
@@ -1577,6 +1657,8 @@ def toggle_task(task_id):
                         base_due_str_for_delete,
                     ))
 
+        update_bezugspflege_by_interactions(conn, med["patient_id"])
+
         conn.commit()
         return redirect(request.referrer or url_for("tasks_view"))
 
@@ -1701,6 +1783,9 @@ def voice_doc():
                 ""  # keep empty; the note is already in nurse_notes
             ))
 
+            conn.commit()
+
+            update_bezugspflege_by_interactions(conn, patient_id)
             conn.commit()
 
             # 3) Now priorities/tasks/alerts can run (because a latest assessment exists)
