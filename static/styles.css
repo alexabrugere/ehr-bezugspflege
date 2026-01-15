@@ -1385,7 +1385,7 @@ select.mobile-input {
   }
 
   .badge-room {
-    bottom: -8px;
+    bottom: -12px;
     font-size: 0.72rem;
     padding: 2px 7px;
   }
