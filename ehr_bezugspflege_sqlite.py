@@ -283,25 +283,25 @@ cur.executemany(
 # Admissions are relative to now: 2–5 days ago
 # Discharge is relative to now: 1–6 days from now
 patients = [
-    ("P-100001", "Maria Braun",   "F", "1980-03-14", "1A", "Herzinsuffizienz", 1,
+    ("P-100001", "Maria Braun",   "F", "1980-03-14", "1A", "Herzinsuffizienz", 3,
      "Penicillin, Latex", "Keine Reha/Intub", dt_days_ago(3), dt_days_from_now(3), "Dr. Keller"),
-    ("P-100002", "Sarah Schulz",     "F", "1972-08-09", "1B", "NSTEMI", 2,
+    ("P-100002", "Sarah Schulz",     "F", "1972-08-09", "1B", "NSTEMI", 3,
      "Keine", "nicht festgelegt", dt_days_ago(2), dt_days_from_now(2), "Dr. Roth"),
     ("P-100003", "Rolf Schwarz",    "M", "1968-11-22", "2A", "Vorhofflimmern", 3,
      "Jod", "nicht festgelegt", dt_days_ago(5), dt_days_from_now(2), "Dr. Klein"),
-    ("P-100004", "Jan Fischer",   "M", "1959-05-18", "2B", "Herzinsuffizienz", 1,
+    ("P-100004", "Jan Fischer",   "M", "1959-05-18", "2B", "Herzinsuffizienz", 3,
      "Keine", "Alles gewünscht", dt_days_ago(4), dt_days_from_now(4), "Dr. Keller"),
-    ("P-100005", "Sofia Wagner",     "F", "1977-01-09", "3A", "KHK / Angina pectoris", 2,
+    ("P-100005", "Sofia Wagner",     "F", "1977-01-09", "3A", "KHK / Angina pectoris", 3,
      "ASS", "nicht festgelegt", dt_days_ago(3), dt_days_from_now(1), "Dr. Roth"),
     ("P-100006", "Nina Becker",    "F", "1983-09-30", "3B", "Hypertensive Krise", 3,
      "Keine", "nicht festgelegt", dt_days_ago(2), dt_days_from_now(2), "Dr. Klein"),
-    ("P-100007", "Markus Vogt",   "M", "1990-02-12", "4A", "V.a. Myokarditis", 1,
+    ("P-100007", "Markus Vogt",   "M", "1990-02-12", "4A", "V.a. Myokarditis", 3,
      "Penicillin", "nicht festgelegt", dt_days_ago(2), dt_days_from_now(5), "Dr. Keller"),
-    ("P-100008", "Paul Fuchs",     "M", "1948-06-03", "4B", "Pneumonie / Herzinsuffizienz", 2,
+    ("P-100008", "Paul Fuchs",     "M", "1948-06-03", "4B", "Pneumonie / Herzinsuffizienz", 3,
      "Keine", "Keine Reha/Intub", dt_days_ago(5), dt_days_from_now(3), "Dr. Roth"),
     ("P-100009", "Helena Wolf",    "F", "1961-12-27", "5A", "TIA + Vorhofflimmern", 3,
      "Heparin", "nicht festgelegt", dt_days_ago(3), dt_days_from_now(4), "Dr. Klein"),
-    ("P-100010", "Renate Webb",    "F", "1970-07-15", "5B", "Bradykardie / Synkope", 1,
+    ("P-100010", "Renate Webb",    "F", "1970-07-15", "5B", "Bradykardie / Synkope", 3,
      "Keine", "nicht festgelegt", dt_days_ago(4), dt_days_from_now(2), "Dr. Keller"),
 ]
 
