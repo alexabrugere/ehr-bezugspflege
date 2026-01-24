@@ -426,6 +426,7 @@ def generate_priorities_and_tasks(conn, patient_id: int) -> None:
                 "RR & Puls alle 2h kontrollieren"
             ]
         elif "Sturz" in prob:
+        elif "Sturz" in prob:
             task_descriptions = [
                 "Lagerung alle 2h dokumentieren",
                 "Sturzrisiko einschätzen"
@@ -1825,7 +1826,7 @@ def voice_doc():
             """, (
                 patient_id,
                 spoken_text,
-                now_local().strftime("%Y-%m-%d %H:%M"),
+                now_local().isoformat(timespec="minutes"),
                 author,
             ))
             saved_anything = True
