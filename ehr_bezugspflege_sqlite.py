@@ -273,9 +273,9 @@ CREATE TABLE IF NOT EXISTS lab_orders (
 cur.executemany(
     "INSERT INTO nurses (name) VALUES (?);",
     [
-        ("Anna Müller",),
-        ("Jonas Weber",),
-        ("Lisa Schmidt",),
+        ("Mia Gross",),
+        ("Karl Loch",),
+        ("Lisa Hans",),
     ]
 )
 
