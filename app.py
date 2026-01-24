@@ -166,8 +166,14 @@ def generate_ai_alerts(conn, patient_id):
     if a["systolic_bp"] and a["systolic_bp"] < 90:
         alerts.append(("Hypotonie – Gefahr einer Schocksituation", "critical"))
 
+    if a["systolic_bp"] and a["systolic_bp"] > 175:
+        alerts.append(("Hypertonie – Organbeschädigungsrisiko", "critical"))
+
     if a["heart_rate"] and a["heart_rate"] > 120:
         alerts.append(("Tachykardie: mögliche Schmerzen, Fieber oder Hypovolämie", "warning"))
+
+    if a["heart_rate"] and a["heart_rate"] <60:
+        alerts.append(("Bradykardie: Gefahr einer Schocksituation", "warning"))
 
     # -------------------------
     # 2. SEPSIS EARLY WARNING
@@ -370,7 +376,7 @@ def generate_priorities_and_tasks(conn, patient_id: int) -> None:
                 problems.append("Hypoxie-Risiko / O₂-Überwachung")
 
         # Heart rate
-        if a["heart_rate"] is not None and a["heart_rate"] > 110:
+        if a["heart_rate"] is not None and a["heart_rate"] > 100:
             if "Tachykardie / Kreislaufbelastung" not in problems:
                 problems.append("Tachykardie / Kreislaufbelastung")
 
@@ -383,6 +389,11 @@ def generate_priorities_and_tasks(conn, patient_id: int) -> None:
         if a["systolic_bp"] is not None and a["systolic_bp"] < 90:
             if "Hypotonie – Kreislauf instabil" not in problems:
                 problems.append("Hypotonie – Kreislauf instabil")
+
+        # Blood pressure
+        if a["systolic_bp"] is not None and a["systolic_bp"] > 175:
+            if "Hypertonie – Kreislauf instabil" not in problems:
+                problems.append("Hypertonie – Kreislauf instabil")
 
         # Blood pressure
         if a["systolic_bp"] is not None and a["systolic_bp"] < 90:
@@ -650,155 +661,6 @@ def ensure_standard_vitals_tasks(conn):
                 """, (pid, desc, due))
 
     conn.commit()
-
-
-
-def compute_patient_alerts():
-    """
-    Looks at latest assessments + meds + allergies and returns a list of alerts
-    for all patients.
-    Each alert is a dict with:
-      - patient_id
-      - patient_name
-      - patient_identifier
-      - type
-      - severity ('high' | 'medium' | 'low')
-      - message
-    """
-    conn = get_connection()
-    cur = conn.cursor()
-    alerts = []
-
-    # basic patient info
-    cur.execute("""
-        SELECT id, patient_identifier, name, diagnosis, allergies
-        FROM patients;
-    """)
-    patients = cur.fetchall()
-
-    for p in patients:
-        pid = p["id"]
-
-        # latest assessment
-        cur.execute("""
-            SELECT *
-            FROM assessments
-            WHERE patient_id = ?
-            ORDER BY datetime(created_at) DESC
-            LIMIT 1;
-        """, (pid,))
-        a = cur.fetchone()
-        if not a:
-            continue
-
-        # 1) Sepsis-like constellation (very simplified!)
-        temp = a["temperature"]
-        hr = a["heart_rate"]
-        rr = a["respiration_rate"]
-        o2 = a["oxygen_sat"]
-
-        if (
-            temp is not None and hr is not None and rr is not None
-            and (
-                (temp >= 38.5 and hr >= 110 and rr >= 22) or
-                (temp <= 36.0 and hr >= 110 and rr >= 22)
-            )
-        ):
-            alerts.append({
-                "patient_id": pid,
-                "patient_name": p["name"],
-                "patient_identifier": p["patient_identifier"],
-                "type": "Sepsiswarnung",
-                "severity": "high",
-                "message": "Vitalzeichen-Konstellation mit möglicher Sepsis – Arzt informieren und Sepsis-Screening erwägen."
-            })
-
-        # 2) Hypoxie-Risiko
-        if o2 is not None and o2 < 90:
-            alerts.append({
-                "patient_id": pid,
-                "patient_name": p["name"],
-                "patient_identifier": p["patient_identifier"],
-                "type": "Hypoxie-Risiko",
-                "severity": "high",
-                "message": f"O₂-Sättigung {o2}% – Sauerstoffgabe / Arztkontakt prüfen."
-            })
-
-        # 3) Hypotonie
-        sys = a["systolic_bp"]
-        dia = a["diastolic_bp"]
-        if sys is not None and sys < 90:
-            alerts.append({
-                "patient_id": pid,
-                "patient_name": p["name"],
-                "patient_identifier": p["patient_identifier"],
-                "type": "Hypotonie",
-                "severity": "medium",
-                "message": f"RR {sys}/{dia or '–'} mmHg – Kreislaufsituation beobachten, ggf. Arzt informieren."
-            })
-
-        # 4) Pain escalation
-        if a["pain"] is not None and a["pain"] >= 8:
-            alerts.append({
-                "patient_id": pid,
-                "patient_name": p["name"],
-                "patient_identifier": p["patient_identifier"],
-                "type": "Starke Schmerzen",
-                "severity": "medium",
-                "message": f"Schmerzskala {a['pain']}/10 – Analgesie / ärztliche Rücksprache prüfen."
-            })
-
-        # 5) Very simple allergy–medication check
-        allergies = (p["allergies"] or "").lower()
-        if allergies:
-            cur.execute("""
-                SELECT name
-                FROM medications
-                WHERE patient_id = ?;
-            """, (pid,))
-            meds = [m["name"].lower() for m in cur.fetchall()]
-
-            # simple keywords – you can expand later
-            allergy_keywords = ["penicillin", "ass", "aspirin", "heparin"]
-            for allergen in allergy_keywords:
-                if allergen in allergies:
-                    for med_name in meds:
-                        if allergen in med_name:
-                            alerts.append({
-                                "patient_id": pid,
-                                "patient_name": p["name"],
-                                "patient_identifier": p["patient_identifier"],
-                                "type": "Medikationswarnung",
-                                "severity": "high",
-                                "message": f"Allergie gegen '{allergen}' und Medikation '{med_name}' – Gabe kritisch prüfen!"
-                            })
-                            break  # avoid duplicates
-
-        # 6) Infection / sepsis clues from notes (very simple)
-        cur.execute("""
-            SELECT note
-            FROM nurse_notes
-            WHERE patient_id = ?
-            ORDER BY datetime(created_at) DESC
-            LIMIT 5;
-        """, (pid,))
-        notes = [n["note"].lower() for n in cur.fetchall()]
-
-        infection_keywords = ["fieber", "infekt", "purulent", "eitrig", "sepsis"]
-        if any(any(k in note for k in infection_keywords) for note in notes):
-            alerts.append({
-                "patient_id": pid,
-                "patient_name": p["name"],
-                "patient_identifier": p["patient_identifier"],
-                "type": "Infektionshinweis",
-                "severity": "low",
-                "message": "Dokumentation mit Infekt-/Sepsis-Hinweisen – Verlauf engmaschig beobachten."
-            })
-
-    conn.close()
-    return alerts
-
-
 
 # ---------------------------------------------------------
 # FLOWSHEET – assessment + last 5 assessments
@@ -1434,12 +1296,6 @@ def labs_view():
         pending_labs=pending_labs,
         active_tab="labs",
     )
-
-
-@app.get("/api/alerts")
-def api_alerts():
-    alerts = compute_patient_alerts()
-    return jsonify(alerts)
 
 
 # ---------------------------------------------------------

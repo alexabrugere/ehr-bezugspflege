@@ -279,30 +279,32 @@ cur.executemany(
     ]
 )
 
-# Patients (10) — short full names (not abbreviated)
+# Patients (11) — short full names (not abbreviated)
 # Admissions are relative to now: 2–5 days ago
 # Discharge is relative to now: 1–6 days from now
 patients = [
-    ("P-100001", "Maria Braun",   "F", "1980-03-14", "1A", "Herzinsuffizienz", 3,
-     "Penicillin, Latex", "Keine Reha/Intub", dt_days_ago(3), dt_days_from_now(3), "Dr. Keller"),
-    ("P-100002", "Sarah Schulz",     "F", "1972-08-09", "1B", "NSTEMI", 3,
-     "Keine", "nicht festgelegt", dt_days_ago(2), dt_days_from_now(2), "Dr. Roth"),
-    ("P-100003", "Rolf Schwarz",    "M", "1968-11-22", "2A", "Vorhofflimmern", 3,
+    ("P-100001", "Maria Braun",   "F", "1980-03-14", "1A", "Herzinsuffizienz", 1,
+     "Latex", "Keine Reha/Intub", dt_days_ago(3), dt_days_from_now(3), "Dr. Keller"),
+    ("P-100002", "Sarah Schulz",     "F", "1972-08-09", "1B", "NSTEMI", 1,
+     "ASS", "nicht festgelegt", dt_days_ago(2), dt_days_from_now(2), "Dr. Roth"),
+    ("P-100003", "Rolf Schwarz",    "M", "1968-11-22", "2A", "Vorhofflimmern", 1,
      "Jod", "nicht festgelegt", dt_days_ago(5), dt_days_from_now(2), "Dr. Klein"),
-    ("P-100004", "Jan Fischer",   "M", "1959-05-18", "2B", "Herzinsuffizienz", 3,
-     "Keine", "Alles gewünscht", dt_days_ago(4), dt_days_from_now(4), "Dr. Keller"),
-    ("P-100005", "Sofia Wagner",     "F", "1977-01-09", "3A", "KHK / Angina pectoris", 3,
-     "ASS", "nicht festgelegt", dt_days_ago(3), dt_days_from_now(1), "Dr. Roth"),
-    ("P-100006", "Nina Becker",    "F", "1983-09-30", "3B", "Hypertensive Krise", 3,
+    ("P-100004", "Jan Fischer",   "M", "1959-05-18", "2B", "Herzinsuffizienz", 1,
+     "Penicillin", "Alles gewünscht", dt_days_ago(4), dt_days_from_now(4), "Dr. Keller"),
+    ("P-100005", "Sofia Wagner",     "F", "1977-01-09", "3A", "KHK / Angina pectoris", 1,
+     "Keine", "nicht festgelegt", dt_days_ago(3), dt_days_from_now(1), "Dr. Roth"),
+    ("P-100006", "Nina Becker",    "F", "1983-09-30", "3B", "Hypertensive Krise", 1,
      "Keine", "nicht festgelegt", dt_days_ago(2), dt_days_from_now(2), "Dr. Klein"),
-    ("P-100007", "Markus Vogt",   "M", "1990-02-12", "4A", "V.a. Myokarditis", 3,
-     "Penicillin", "nicht festgelegt", dt_days_ago(2), dt_days_from_now(5), "Dr. Keller"),
-    ("P-100008", "Paul Fuchs",     "M", "1948-06-03", "4B", "Pneumonie / Herzinsuffizienz", 3,
+    ("P-100007", "Markus Vogt",   "M", "1990-02-12", "4A", "V.a. Myokarditis", 1,
+     "Novaligin", "nicht festgelegt", dt_days_ago(2), dt_days_from_now(5), "Dr. Keller"),
+    ("P-100008", "Paul Fuchs",     "M", "1948-06-03", "4B", "Pneumonie / Herzinsuffizienz", 1,
      "Keine", "Keine Reha/Intub", dt_days_ago(5), dt_days_from_now(3), "Dr. Roth"),
-    ("P-100009", "Helena Wolf",    "F", "1961-12-27", "5A", "Vorhofflimmern", 3,
+    ("P-100009", "Helena Wolf",    "F", "1961-12-27", "5A", "Vorhofflimmern", 1,
      "Heparin", "nicht festgelegt", dt_days_ago(3), dt_days_from_now(4), "Dr. Klein"),
-    ("P-100010", "Renate Webb",    "F", "1970-07-15", "5B", "Bradykardie / Synkope", 3,
+    ("P-100010", "Renate Webb",    "F", "1970-07-15", "5B", "Bradykardie / Synkope", 1,
      "Keine", "nicht festgelegt", dt_days_ago(4), dt_days_from_now(2), "Dr. Keller"),
+    ("P-100011", "Jonas Root",     "M", "1961-01-21", "6A", "Diabetes / Wundinfektion", 1,
+     "Keine", "nicht festgelegt", dt_days_ago(3), dt_days_from_now(1), "Dr. Roth"),
 ]
 
 cur.executemany("""
@@ -380,6 +382,11 @@ add_med(9, "Metoprolol", "25 mg", "p.o.", "2x täglich", due_morning)
 add_med(10, "Atropin", "0.5 mg", "i.v.", "bei Bedarf", now_dt() + timedelta(hours=1))
 add_med(10, "Bisoprolol", "1.25 mg", "p.o.", "1x morgens", due_morning)
 
+# Patient 11
+add_med(11, "Piperacillin/Tazobactam", "4.5 g", "i.v.", "alle 8h", now_dt() + timedelta(hours=1))
+add_med(11, "Novalgin", "500 mg", "p.o.", "2x täglich", due_morning)
+add_med(11, "Humalog", "4 IE", "s.q.", "2x täglich", due_morning)
+
 # Insert meds
 cur.executemany("""
 INSERT INTO medications (patient_id, name, dose, route, schedule, next_due, due_time)
@@ -420,6 +427,7 @@ add_order(7, "Blutbild - Routine", 0, 10, 0, "geplant", "Dr. Roth", "Diagnostik"
 add_order(8, "Blutbild - Routine", 0, 10, 0, "geplant", "Dr. Roth", "Diagnostik")
 add_order(9, "Blutbild - Routined", 0, 10, 0, "geplant", "Dr. Roth", "Diagnostik")
 add_order(10, "Blutbild - Routine", 0, 10, 0, "geplant", "Dr. Roth", "Diagnostik")
+add_order(11, "Blutbild - Routine", 0, 10, 0, "geplant", "Dr. Roth", "Diagnostik")
 
 cur.executemany("""
 INSERT INTO orders (patient_id, description, due_date, due_time, status, ordered_by, type)
@@ -430,8 +438,15 @@ VALUES (?, ?, ?, ?, ?, ?, ?);
 doc_notes = [
     (1, "Klinisch kompensiert, Diuretika angepasst.", iso_minutes(now_dt() - timedelta(hours=6)), "Dr. Keller"),
     (2, "Post-NSTEMI, Verlauf stabil, Echo geplant.", iso_minutes(now_dt() - timedelta(hours=7)), "Dr. Roth"),
-    (3, "Vorhofflimmern, Frequenzkontrolle begonnen.", iso_minutes(now_dt() - timedelta(hours=10)), "Dr. Klein"),
+    (3, "Vorhofflimmern, Telemetrie-Überwachng begonnen.", iso_minutes(now_dt() - timedelta(hours=10)), "Dr. Klein"),
+    (4, "Klinisch kompensiert, Diuretika angepasst.", iso_minutes(now_dt() - timedelta(hours=5)), "Dr. Roth"),
+    (5, "Verlauf stabil, Echo geplant.", iso_minutes(now_dt() - timedelta(hours=6)), "Dr. Keller"),
+    (6, "Blutdruck Medikamente angepasst.", iso_minutes(now_dt() - timedelta(hours=7)), "Dr. Roth"),
+    (7, "Telemetrie-Überwachng begonnen. Schmerzen Medikamente angesetzt.", iso_minutes(now_dt() - timedelta(hours=10)), "Dr. Klein"),
     (8, "Pneumonie, Antibiotika laufen, O₂ Bedarf.", iso_minutes(now_dt() - timedelta(hours=5)), "Dr. Roth"),
+    (9, "Vorhofflimmern, Telemetrie-Überwachng begonnen.", iso_minutes(now_dt() - timedelta(hours=6)), "Dr. Keller"),
+    (10, "24-Stunden Blutdruck im Verlauf", iso_minutes(now_dt() - timedelta(hours=7)), "Dr. Roth"),
+    (11, "Wundinfektion am Unterschenkel. Antibiotika laufen.", iso_minutes(now_dt() - timedelta(hours=10)), "Dr. Klein"),
 ]
 cur.executemany("""
 INSERT INTO doctor_notes (patient_id, note, created_at, author)
@@ -439,11 +454,28 @@ VALUES (?, ?, ?, ?);
 """, doc_notes)
 
 nurse_notes = [
-    (1, "Patient kurzatmig bei Belastung, O₂ 2l.", iso_minutes(now_dt() - timedelta(hours=5)), "Anna Müller"),
-    (1, "Bilanz begonnen, Angehörige aufgeklärt.", iso_minutes(now_dt() - timedelta(hours=2)), "Anna Müller"),
-    (2, "Kurzatmigkeit bei Bewegung.", iso_minutes(now_dt() - timedelta(hours=4)), "Jonas Weber"),
-    (4, "Ödeme an Unterschenkeln, Haut gespannt.", iso_minutes(now_dt() - timedelta(hours=3)), "Lisa Schmidt"),
-    (8, "Husten produktiv, Sättigung schwankt.", iso_minutes(now_dt() - timedelta(hours=1)), "Jonas Weber"),
+    (1, "Patient in stabilem Zustand.", iso_minutes(now_dt() - timedelta(hours=5)), "Mia Gross"),
+    (1, "Patient in stabilem Zustand.", iso_minutes(now_dt() - timedelta(hours=24)), "Mia Gross"),
+    (2, "Patient in stabilem Zustand.", iso_minutes(now_dt() - timedelta(hours=5)), "Mia Gross"),
+    (2, "Patient in stabilem Zustand.", iso_minutes(now_dt() - timedelta(hours=24)), "Mia Gross"),
+    (3, "Patient in stabilem Zustand.", iso_minutes(now_dt() - timedelta(hours=5)), "Mia Gross"),
+    (3, "Patient in stabilem Zustand.", iso_minutes(now_dt() - timedelta(hours=24)), "Mia Gross"),
+    (4, "Patient in stabilem Zustand.", iso_minutes(now_dt() - timedelta(hours=5)), "Mia Gross"),
+    (4, "Patient in stabilem Zustand.", iso_minutes(now_dt() - timedelta(hours=24)), "Mia Gross"),
+    (5, "Patient in stabilem Zustand.", iso_minutes(now_dt() - timedelta(hours=5)), "Mia Gross"),
+    (5, "Patient in stabilem Zustand.", iso_minutes(now_dt() - timedelta(hours=24)), "Mia Gross"),
+    (6, "Patient in stabilem Zustand.", iso_minutes(now_dt() - timedelta(hours=5)), "Mia Gross"),
+    (6, "Patient in stabilem Zustand.", iso_minutes(now_dt() - timedelta(hours=24)), "Mia Gross"),
+    (7, "Patient in stabilem Zustand.", iso_minutes(now_dt() - timedelta(hours=5)), "Mia Gross"),
+    (7, "Patient in stabilem Zustand.", iso_minutes(now_dt() - timedelta(hours=24)), "Mia Gross"),
+    (8, "Patient in stabilem Zustand.", iso_minutes(now_dt() - timedelta(hours=5)), "Mia Gross"),
+    (8, "Patient in stabilem Zustand.", iso_minutes(now_dt() - timedelta(hours=24)), "Mia Gross"),
+    (9, "Patient in stabilem Zustand.", iso_minutes(now_dt() - timedelta(hours=5)), "Mia Gross"),
+    (9, "Patient in stabilem Zustand.", iso_minutes(now_dt() - timedelta(hours=24)), "Mia Gross"),
+    (10, "Patient in stabilem Zustand.", iso_minutes(now_dt() - timedelta(hours=5)), "Mia Gross"),
+    (10, "Patient in stabilem Zustand.", iso_minutes(now_dt() - timedelta(hours=24)), "Mia Gross"),
+    (11, "Patient in stabilem Zustand.", iso_minutes(now_dt() - timedelta(hours=5)), "Mia Gross"),
+    (11, "Patient in stabilem Zustand.", iso_minutes(now_dt() - timedelta(hours=24)), "Mia Gross"),
 ]
 cur.executemany("""
 INSERT INTO nurse_notes (patient_id, note, created_at, author)
