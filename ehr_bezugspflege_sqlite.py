@@ -410,8 +410,16 @@ for pid in range(1, 11):
     add_order(pid, "Gewichtskontrolle täglich", 0, 8, 0, "offen", "Station", "Anordnung")
 
 # Add a couple special orders
-add_order(2, "Belastungs-EKG", 1, 10, 0, "geplant", "Dr. Roth", "Diagnostik")
-add_order(8, "Röntgen Thorax", 0, 11, 0, "geplant", "Dr. Roth", "Diagnostik")
+add_order(1, "Blutbild", 0, 10, 0, "geplant", "Dr. Roth", "Diagnostik")
+add_order(2, "Blutbild", 0, 10, 0, "geplant", "Dr. Roth", "Diagnostik")
+add_order(3, "Blutbild", 0, 10, 0, "geplant", "Dr. Roth", "Diagnostik")
+add_order(4, "Blutbild", 0, 10, 0, "geplant", "Dr. Roth", "Diagnostik")
+add_order(5, "Blutbild", 0, 10, 0, "geplant", "Dr. Roth", "Diagnostik")
+add_order(6, "Blutbild", 0, 10, 0, "geplant", "Dr. Roth", "Diagnostik")
+add_order(7, "Blutbild", 0, 10, 0, "geplant", "Dr. Roth", "Diagnostik")
+add_order(8, "Blutbild", 0, 10, 0, "geplant", "Dr. Roth", "Diagnostik")
+add_order(9, "Blutbild", 0, 10, 0, "geplant", "Dr. Roth", "Diagnostik")
+add_order(10, "Blutbild", 0, 10, 0, "geplant", "Dr. Roth", "Diagnostik")
 
 cur.executemany("""
 INSERT INTO orders (patient_id, description, due_date, due_time, status, ordered_by, type)
