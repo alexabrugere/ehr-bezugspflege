@@ -299,7 +299,7 @@ patients = [
      "Penicillin", "nicht festgelegt", dt_days_ago(2), dt_days_from_now(5), "Dr. Keller"),
     ("P-100008", "Paul Fuchs",     "M", "1948-06-03", "4B", "Pneumonie / Herzinsuffizienz", 3,
      "Keine", "Keine Reha/Intub", dt_days_ago(5), dt_days_from_now(3), "Dr. Roth"),
-    ("P-100009", "Helena Wolf",    "F", "1961-12-27", "5A", "TIA + Vorhofflimmern", 3,
+    ("P-100009", "Helena Wolf",    "F", "1961-12-27", "5A", "Vorhofflimmern", 3,
      "Heparin", "nicht festgelegt", dt_days_ago(3), dt_days_from_now(4), "Dr. Klein"),
     ("P-100010", "Renate Webb",    "F", "1970-07-15", "5B", "Bradykardie / Synkope", 3,
      "Keine", "nicht festgelegt", dt_days_ago(4), dt_days_from_now(2), "Dr. Keller"),
@@ -410,7 +410,7 @@ for pid in range(1, 11):
     add_order(pid, "Gewichtskontrolle täglich", 0, 8, 0, "offen", "Station", "Anordnung")
 
 # Add a couple special orders
-add_order(1, "Blutbild- Routine", 0, 10, 0, "geplant", "Dr. Roth", "Diagnostik")
+add_order(1, "Blutbild - Routine", 0, 10, 0, "geplant", "Dr. Roth", "Diagnostik")
 add_order(2, "Blutbild - Routine", 0, 10, 0, "geplant", "Dr. Roth", "Diagnostik")
 add_order(3, "Blutbild - Routine", 0, 10, 0, "geplant", "Dr. Roth", "Diagnostik")
 add_order(4, "Blutbild - Routine", 0, 10, 0, "geplant", "Dr. Roth", "Diagnostik")
@@ -418,7 +418,7 @@ add_order(5, "Blutbild - Routine", 0, 10, 0, "geplant", "Dr. Roth", "Diagnostik"
 add_order(6, "Blutbild - Routine", 0, 10, 0, "geplant", "Dr. Roth", "Diagnostik")
 add_order(7, "Blutbild - Routine", 0, 10, 0, "geplant", "Dr. Roth", "Diagnostik")
 add_order(8, "Blutbild - Routine", 0, 10, 0, "geplant", "Dr. Roth", "Diagnostik")
-add_order(9, "Blutbil - Routined", 0, 10, 0, "geplant", "Dr. Roth", "Diagnostik")
+add_order(9, "Blutbild - Routined", 0, 10, 0, "geplant", "Dr. Roth", "Diagnostik")
 add_order(10, "Blutbild - Routine", 0, 10, 0, "geplant", "Dr. Roth", "Diagnostik")
 
 cur.executemany("""

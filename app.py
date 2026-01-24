@@ -374,10 +374,20 @@ def generate_priorities_and_tasks(conn, patient_id: int) -> None:
             if "Tachykardie / Kreislaufbelastung" not in problems:
                 problems.append("Tachykardie / Kreislaufbelastung")
 
+        # Heart rate
+        if a["heart_rate"] is not None and a["heart_rate"] < 60:
+            if "Bradykardie / Kreislauf instabil" not in problems:
+                problems.append("Bradykardie / Kreislauf instabil")
+
         # Blood pressure
         if a["systolic_bp"] is not None and a["systolic_bp"] < 90:
             if "Hypotonie – Kreislauf instabil" not in problems:
                 problems.append("Hypotonie – Kreislauf instabil")
+
+        # Blood pressure
+        if a["systolic_bp"] is not None and a["systolic_bp"] < 90:
+            if "Sturz- und Dekubitusrisiko" not in problems:
+                problems.append("Sturz- und Dekubitusrisiko")
 
         # Temperature
         if a["temperature"] is not None and a["temperature"] > 38.5:
@@ -421,7 +431,7 @@ def generate_priorities_and_tasks(conn, patient_id: int) -> None:
                 "SpO₂ & AF alle 2h dokumentieren",
                 "Oberkörperhochlagerung"
             ]
-        elif "Hypotonie" in prob or "Tachykardie" in prob:
+        elif "Hypotonie" in prob or "Hypertonie" in prob or "Tachykardie" in prob or "Bradykardie" in prob:
             task_descriptions = [
                 "RR & Puls alle 2h kontrollieren"
             ]
