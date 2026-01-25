@@ -1163,7 +1163,7 @@ def tasks_view():
         JOIN medications m ON m.id = ma.med_id
         LEFT JOIN nurses n ON n.id = ma.nurse_id
         WHERE ma.patient_id = ?
-        ORDER BY datetime(ma.given_at) DESC, id DESC
+        ORDER BY datetime(ma.given_at) DESC
         LIMIT 20;
     """, (patient_id or 0,))
     med_history = cur.fetchall()
