@@ -145,7 +145,7 @@ def generate_ai_alerts(conn, patient_id):
         SELECT *
         FROM assessments
         WHERE patient_id = ?
-        ORDER BY datetime(created_at) DESC
+        ORDER BY datetime(created_at) DESC, id DESC
         LIMIT 1;
     """, (patient_id,))
     a = cur.fetchone()
@@ -201,6 +201,37 @@ def generate_ai_alerts(conn, patient_id):
 
     if "bisoprolol" in meds and a["systolic_bp"] and a["systolic_bp"] < 95:
         alerts.append(("Bisoprolol bei niedrigen RR mit Vorsicht verabreichen!", "warning"))
+
+        # 4. ALLERGY / INTOLERANCE SYMPTOMS FROM NURSE NOTES
+        # -------------------------
+    cur.execute("""
+         SELECT note
+         FROM nurse_notes
+         WHERE patient_id = ?
+         ORDER BY datetime(created_at) DESC, id DESC
+         LIMIT 5;
+     """, (patient_id,))
+    recent_notes = " ".join([(r["note"] or "").lower() for r in cur.fetchall()])
+
+    allergy_symptom_keywords = [
+        "juckreiz", "juckende haut", "haut juckt"]
+
+    if any(k in recent_notes for k in allergy_symptom_keywords):
+        # Pull documented allergies from patient
+        cur.execute("SELECT allergies FROM patients WHERE id = ?;", (patient_id,))
+        row = cur.fetchone()
+        allergies_text = (row["allergies"] or "").strip() if row else ""
+
+        # Pull currently ordered meds (helps the nurse "check meds")
+        cur.execute("SELECT name FROM medications WHERE patient_id = ?;", (patient_id,))
+        ordered_meds = ", ".join([m["name"] for m in cur.fetchall()]) or "—"
+
+        alerts.append((
+            f"Allergie-/Unverträglichkeitszeichen (z.B. Juckreiz/Ausschlag). "
+            f"Bitte Allergien & angeordnete Medikamente prüfen. "
+            f"Allergien: {allergies_text or '—'} | Medikation: {ordered_meds}",
+            "warning"
+        ))
 
     # -------------------------
     # SAVE ALERTS (CLEAR OLD ALERTS)
@@ -271,7 +302,7 @@ def extract_problems_from_nurse_notes(conn, patient_id: int) -> list[str]:
         SELECT note
         FROM nurse_notes
         WHERE patient_id = ?
-        ORDER BY datetime(created_at) DESC
+        ORDER BY datetime(created_at) DESC, id DESC
         LIMIT 1;
     """, (patient_id,))
 
@@ -296,6 +327,8 @@ PRIORITY_WEIGHTS = {
     # C
     "Hypotonie – Kreislauf instabil": 2,
     "Tachykardie / Kreislaufbelastung": 2,
+    "Bradykardie / Kreislauf instabil": 2,
+    "Hypertonie – Kreislauf instabil": 2,
 
     # D
     "Akute Verwirrtheit / Delirrisiko": 3,
@@ -327,7 +360,7 @@ def generate_priorities_and_tasks(conn, patient_id: int) -> None:
         SELECT *
         FROM assessments
         WHERE patient_id = ?
-        ORDER BY datetime(created_at) DESC
+        ORDER BY datetime(created_at) DESC, id DESC
         LIMIT 1;
     """, (patient_id,))
     a = cur.fetchone()
@@ -500,8 +533,8 @@ SPOKEN_PRIORITY_KEYWORDS = {
     "atemnot": "Atemnot / eingeschränkter Gasaustausch",
     "kurzatmig": "Atemnot / eingeschränkter Gasaustausch",
 
-    "schmerz": "Starke Schmerzen",
-    "schmerzen": "Starke Schmerzen",
+    "schmerz": "Schmerzen",
+    "schmerzen": "Schmerzen",
 
     "verwirrt": "Akute Verwirrtheit / Delirrisiko",
     "delir": "Akute Verwirrtheit / Delirrisiko",
@@ -749,12 +782,6 @@ def flowsheet(patient_id):
         charted_weight = (weight is not None)
         charted_pain = (pain is not None)
 
-        # Only count these as "Vitalzeichen" (NOT weight/pain)
-        charted_any_vitals = any(v is not None for v in [
-            temperature, heart_rate, respiration_rate,
-            systolic_bp, diastolic_bp, oxygen_sat
-        ])
-
         def is_filled(x):
             return x is not None and str(x).strip() != ""
 
@@ -816,7 +843,7 @@ def flowsheet(patient_id):
             SELECT alert, severity, created_at
             FROM ai_alerts
             WHERE patient_id = ?
-            ORDER BY datetime(created_at) DESC;
+            ORDER BY datetime(created_at) DESC, id DESC; 
         """, (patient_id,))
     alerts = cur.fetchall()
 
@@ -824,7 +851,7 @@ def flowsheet(patient_id):
         SELECT *
         FROM assessments
         WHERE patient_id = ?
-        ORDER BY datetime(created_at) DESC
+        ORDER BY datetime(created_at) DESC, id DESC
         LIMIT 5;
     """, (patient_id,))
     recent_assessments = cur.fetchall()
@@ -958,7 +985,7 @@ def patient_detail(patient_id):
         SELECT note, created_at, author
         FROM doctor_notes
         WHERE patient_id = ?
-        ORDER BY created_at DESC;
+        ORDER BY created_at DESC, id DESC;
     """, (patient_id,))
     doctor_notes = cur.fetchall()
 
@@ -966,7 +993,7 @@ def patient_detail(patient_id):
         SELECT note, created_at, author
         FROM nurse_notes
         WHERE patient_id = ?
-        ORDER BY created_at DESC;
+        ORDER BY created_at DESC, id DESC;
     """, (patient_id,))
     nurse_notes = cur.fetchall()
 
@@ -978,7 +1005,7 @@ def patient_detail(patient_id):
         SELECT alert, severity, created_at
         FROM ai_alerts
         WHERE patient_id = ?
-        ORDER BY datetime(created_at) DESC;
+        ORDER BY datetime(created_at) DESC, id DESC;
     """, (patient_id,))
     alerts = cur.fetchall()
 
@@ -1136,7 +1163,7 @@ def tasks_view():
         JOIN medications m ON m.id = ma.med_id
         LEFT JOIN nurses n ON n.id = ma.nurse_id
         WHERE ma.patient_id = ?
-        ORDER BY datetime(ma.given_at) DESC
+        ORDER BY datetime(ma.given_at) DESC, id DESC
         LIMIT 20;
     """, (patient_id or 0,))
     med_history = cur.fetchall()
@@ -1145,7 +1172,7 @@ def tasks_view():
                SELECT alert, severity, created_at
                FROM ai_alerts
                WHERE patient_id = ?
-               ORDER BY datetime(created_at) DESC;
+               ORDER BY datetime(created_at) DESC, id DESC;
            """, (patient_id,))
     alerts = cur.fetchall()
 
@@ -1235,7 +1262,7 @@ def labs_view():
             JOIN patients p ON p.id = lo.patient_id
             WHERE lo.patient_id = ?
               AND lo.status IN ('Ausstehend', 'Offen')
-            ORDER BY lo.ordered_at DESC;
+            ORDER BY lo.ordered_at DESC, id DESC;
         """, (patient_id,))
     else:
         cur.execute("""
@@ -1243,7 +1270,7 @@ def labs_view():
             FROM lab_orders lo
             JOIN patients p ON p.id = lo.patient_id
             WHERE lo.status IN ('Ausstehend', 'Offen')
-            ORDER BY lo.ordered_at DESC;
+            ORDER BY lo.ordered_at DESC, id DESC;
         """)
     pending_labs = cur.fetchall()
 
@@ -1257,7 +1284,7 @@ def labs_view():
             JOIN patients p ON p.id = lr.patient_id
             WHERE lr.patient_id = ?
               AND lr.result_datetime >= ?
-            ORDER BY lr.result_datetime DESC;
+            ORDER BY lr.result_datetime DESC, id DESC;
         """, (patient_id, five_days_ago))
     else:
         cur.execute("""
@@ -1265,7 +1292,7 @@ def labs_view():
             FROM lab_results lr
             JOIN patients p ON p.id = lr.patient_id
             WHERE lr.result_datetime >= ?
-            ORDER BY lr.result_datetime DESC;
+            ORDER BY lr.result_datetime DESC, id DESC;
         """, (five_days_ago,))
     recent_labs = cur.fetchall()
 
@@ -1273,7 +1300,7 @@ def labs_view():
             SELECT alert, severity, created_at
             FROM ai_alerts
             WHERE patient_id = ?
-            ORDER BY datetime(created_at) DESC;
+            ORDER BY datetime(created_at) DESC, id DESC;
         """, (patient_id,))
     alerts = cur.fetchall()
 
