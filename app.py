@@ -173,7 +173,7 @@ def generate_ai_alerts(conn, patient_id):
         alerts.append(("Tachykardie: mögliche Schmerzen, Fieber oder Hypovolämie", "warning"))
 
     if a["heart_rate"] and a["heart_rate"] <60:
-        alerts.append(("Bradykardie: Gefahr einer Schocksituation", "warning"))
+        alerts.append(("Bradykardie: Gefahr einer Schocksituation", "critical"))
 
     # -------------------------
     # 2. SEPSIS EARLY WARNING
@@ -200,6 +200,9 @@ def generate_ai_alerts(conn, patient_id):
     meds = [m["name"].lower() for m in cur.fetchall()]
 
     if "bisoprolol" in meds and a["systolic_bp"] and a["systolic_bp"] < 95:
+        alerts.append(("Bisoprolol bei niedrigen RR mit Vorsicht verabreichen!", "warning"))
+
+    if "bisoprolol" in meds and a["heart_rate"] and a["heart_rate"] < 55:
         alerts.append(("Bisoprolol bei niedrigen RR mit Vorsicht verabreichen!", "warning"))
 
         # 4. ALLERGY / INTOLERANCE SYMPTOMS FROM NURSE NOTES
