@@ -485,7 +485,7 @@ VALUES (?, ?, ?, ?);
 cur.execute("SELECT id FROM patients;")
 patient_ids = [r[0] for r in cur.fetchall()]
 
-due = (datetime.now() + timedelta(hours=0)).isoformat(timespec="minutes")
+due = (datetime.now() + timedelta(hours=-1)).isoformat(timespec="minutes")
 
 standard_tasks = [
     "Vitalzeichen nach Standard",
