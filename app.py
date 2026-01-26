@@ -203,7 +203,7 @@ def generate_ai_alerts(conn, patient_id):
         alerts.append(("Bisoprolol bei niedrigen RR mit Vorsicht verabreichen!", "warning"))
 
     if "bisoprolol" in meds and a["heart_rate"] and a["heart_rate"] < 55:
-        alerts.append(("Bisoprolol bei niedrigen RR mit Vorsicht verabreichen!", "warning"))
+        alerts.append(("Bisoprolol bei niedrigen HF mit Vorsicht verabreichen!", "warning"))
 
         # 4. ALLERGY / INTOLERANCE SYMPTOMS FROM NURSE NOTES
         # -------------------------

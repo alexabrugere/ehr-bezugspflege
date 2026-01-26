@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import collections.abc as cabc
 import functools
 import json
 import typing as t
@@ -83,8 +84,11 @@ class Request(_SansIORequest):
     #: data in memory for post data is longer than the specified value a
     #: :exc:`~werkzeug.exceptions.RequestEntityTooLarge` exception is raised.
     #:
+    #: .. versionchanged:: 3.1
+    #:     Defaults to 500kB instead of unlimited.
+    #:
     #: .. versionadded:: 0.5
-    max_form_memory_size: int | None = None
+    max_form_memory_size: int | None = 500_000
 
     #: The maximum number of multipart parts to parse, passed to
     #: :attr:`form_data_parser_class`. Parsing form data with more than this
@@ -182,13 +186,13 @@ class Request(_SansIORequest):
         from ..exceptions import HTTPException
 
         @functools.wraps(f)
-        def application(*args):  # type: ignore
+        def application(*args: t.Any) -> cabc.Iterable[bytes]:
             request = cls(args[-2])
             with request:
                 try:
                     resp = f(*args[:-2] + (request,))
                 except HTTPException as e:
-                    resp = e.get_response(args[-2])
+                    resp = t.cast("WSGIApplication", e.get_response(args[-2]))
                 return resp(*args[-2:])
 
         return t.cast("WSGIApplication", application)
@@ -369,13 +373,12 @@ class Request(_SansIORequest):
         return self.get_data(parse_form_data=True)
 
     @t.overload
-    def get_data(  # type: ignore
+    def get_data(
         self,
         cache: bool = True,
         as_text: t.Literal[False] = False,
         parse_form_data: bool = False,
-    ) -> bytes:
-        ...
+    ) -> bytes: ...
 
     @t.overload
     def get_data(
@@ -383,8 +386,7 @@ class Request(_SansIORequest):
         cache: bool = True,
         as_text: t.Literal[True] = ...,
         parse_form_data: bool = False,
-    ) -> str:
-        ...
+    ) -> str: ...
 
     def get_data(
         self, cache: bool = True, as_text: bool = False, parse_form_data: bool = False
@@ -497,7 +499,7 @@ class Request(_SansIORequest):
 
     @property
     def script_root(self) -> str:
-        """Alias for :attr:`self.root_path`. ``environ["SCRIPT_ROOT"]``
+        """Alias for :attr:`self.root_path`. ``environ["SCRIPT_NAME"]``
         without a trailing slash.
         """
         return self.root_path
@@ -540,7 +542,7 @@ class Request(_SansIORequest):
     json_module = json
 
     @property
-    def json(self) -> t.Any | None:
+    def json(self) -> t.Any:
         """The parsed JSON data if :attr:`mimetype` indicates JSON
         (:mimetype:`application/json`, see :attr:`is_json`).
 
@@ -564,14 +566,12 @@ class Request(_SansIORequest):
     @t.overload
     def get_json(
         self, force: bool = ..., silent: t.Literal[False] = ..., cache: bool = ...
-    ) -> t.Any:
-        ...
+    ) -> t.Any: ...
 
     @t.overload
     def get_json(
         self, force: bool = ..., silent: bool = ..., cache: bool = ...
-    ) -> t.Any | None:
-        ...
+    ) -> t.Any | None: ...
 
     def get_json(
         self, force: bool = False, silent: bool = False, cache: bool = True

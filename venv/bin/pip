@@ -1,4 +1,4 @@
-#!/home/alexabrugere/PycharmProjects/PythonProject/venv/bin/python3
+#!/home/alexabrugere/PycharmProjects/PythonProject/venv/bin/python
 # -*- coding: utf-8 -*-
 import re
 import sys

@@ -438,7 +438,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?);
 doc_notes = [
     (1, "Klinisch kompensiert, Diuretika angepasst.", iso_minutes(now_dt() - timedelta(hours=6)), "Dr. Keller"),
     (2, "Post-NSTEMI, Verlauf stabil, Echo geplant.", iso_minutes(now_dt() - timedelta(hours=7)), "Dr. Roth"),
-    (3, "Vorhofflimmern, Telemetrie-Überwachng begonnen.", iso_minutes(now_dt() - timedelta(hours=10)), "Dr. Klein"),
+    (3, "Vorhofflimmern, Telemetrie-Überwachung begonnen.", iso_minutes(now_dt() - timedelta(hours=10)), "Dr. Klein"),
     (4, "Klinisch kompensiert, Diuretika angepasst.", iso_minutes(now_dt() - timedelta(hours=5)), "Dr. Roth"),
     (5, "Verlauf stabil, Echo geplant.", iso_minutes(now_dt() - timedelta(hours=6)), "Dr. Keller"),
     (6, "Blutdruck Medikamente angepasst.", iso_minutes(now_dt() - timedelta(hours=7)), "Dr. Roth"),
