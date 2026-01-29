@@ -341,51 +341,51 @@ def add_med_in_hours(patient_id, name, dose, route, schedule, hours):
     med_seed.append((patient_id, name, dose, route, schedule, iso_minutes(d), iso_minutes(d)))
 
 # Patient 1
-add_med(1, "Bisoprolol", "2.5 mg", "p.o.", "1x morgens", due_morning)
-add_med(1, "Furosemid", "20 mg", "i.v.", "2x täglich", due_morning)
-add_med(1, "Pantoprazol", "40 mg", "p.o.", "1x morgens", due_morning)
+add_med(1, "Bisoprolol", "2.5 mg", "p.o.", "1x morgens", now_dt() + timedelta(hours=0))
+add_med(1, "Furosemid", "20 mg", "i.v.", "2x täglich", now_dt() + timedelta(hours=0))
+add_med(1, "Pantoprazol", "40 mg", "p.o.", "1x morgens", now_dt() + timedelta(hours=0))
 
 # Patient 2
-add_med(2, "ASS", "100 mg", "p.o.", "1x morgens", due_morning)
-add_med(2, "Heparin", "5000 IE", "s.c.", "alle 8h", iso_minutes(now_dt() + timedelta(hours=2)) and (now_dt()+timedelta(hours=2)))
+add_med(2, "ASS", "100 mg", "p.o.", "1x morgens", now_dt() + timedelta(hours=0))
+add_med(2, "Heparin", "5000 IE", "s.c.", "alle 8h", now_dt() + timedelta(hours=0))
 
 # Patient 3
-add_med(3, "Metoprolol", "25 mg", "p.o.", "2x täglich", due_morning)
-add_med(3, "Apixaban", "5 mg", "p.o.", "2x täglich", due_evening)
+add_med(3, "Metoprolol", "25 mg", "p.o.", "2x täglich", now_dt() + timedelta(hours=0))
+add_med(3, "Apixaban", "5 mg", "p.o.", "2x täglich", now_dt() + timedelta(hours=0))
 
 # Patient 4
-add_med(4, "Ramipril", "2.5 mg", "p.o.", "1x morgens", due_morning)
-add_med(4, "Spironolacton", "25 mg", "p.o.", "1x morgens", due_morning)
-add_med(4, "Furosemid", "40 mg", "i.v.", "2x täglich", due_afternoon)
+add_med(4, "Ramipril", "2.5 mg", "p.o.", "1x morgens", now_dt() + timedelta(hours=0))
+add_med(4, "Spironolacton", "25 mg", "p.o.", "1x morgens", now_dt() + timedelta(hours=0))
+add_med(4, "Furosemid", "40 mg", "i.v.", "2x täglich", now_dt() + timedelta(hours=0))
 
 # Patient 5
-add_med(5, "ASS", "100 mg", "p.o.", "1x morgens", due_morning)
-add_med(5, "Nitroglycerin", "0.4 mg", "s.l.", "bei Bedarf", now_dt() + timedelta(hours=1))
+add_med(5, "ASS", "100 mg", "p.o.", "1x morgens", now_dt() + timedelta(hours=0))
+add_med(5, "Nitroglycerin", "0.4 mg", "s.l.", "bei Bedarf", now_dt() + timedelta(hours=0))
 
 # Patient 6
-add_med(6, "Urapidil", "10 mg", "i.v.", "bei Bedarf", now_dt() + timedelta(hours=1))
-add_med(6, "Amlodipin", "5 mg", "p.o.", "1x morgens", due_morning)
+add_med(6, "Urapidil", "10 mg", "i.v.", "bei Bedarf", now_dt() + timedelta(hours=0))
+add_med(6, "Amlodipin", "5 mg", "p.o.", "1x morgens", now_dt() + timedelta(hours=0))
 
 # Patient 7
-add_med(7, "Ibuprofen", "400 mg", "p.o.", "3x täglich", due_noon)
-add_med(7, "Pantoprazol", "40 mg", "p.o.", "1x morgens", due_morning)
+add_med(7, "Ibuprofen", "400 mg", "p.o.", "3x täglich", now_dt() + timedelta(hours=0))
+add_med(7, "Pantoprazol", "40 mg", "p.o.", "1x morgens", now_dt() + timedelta(hours=0))
 
 # Patient 8
-add_med(8, "Piperacillin/Tazobactam", "4.5 g", "i.v.", "alle 8h", now_dt() + timedelta(hours=1))
-add_med(8, "Furosemid", "20 mg", "i.v.", "2x täglich", due_morning)
+add_med(8, "Piperacillin/Tazobactam", "4.5 g", "i.v.", "alle 8h", now_dt() + timedelta(hours=0))
+add_med(8, "Furosemid", "20 mg", "i.v.", "2x täglich", now_dt() + timedelta(hours=0))
 
 # Patient 9
-add_med(9, "Rivaroxaban", "20 mg", "p.o.", "1x abends", due_evening)
-add_med(9, "Metoprolol", "25 mg", "p.o.", "2x täglich", due_morning)
+add_med(9, "Rivaroxaban", "20 mg", "p.o.", "1x abends", now_dt() + timedelta(hours=0))
+add_med(9, "Metoprolol", "25 mg", "p.o.", "2x täglich", now_dt() + timedelta(hours=0))
 
 # Patient 10
-add_med(10, "Atropin", "0.5 mg", "i.v.", "bei Bedarf", now_dt() + timedelta(hours=1))
-add_med(10, "Bisoprolol", "1.25 mg", "p.o.", "1x morgens", due_morning)
+add_med(10, "Atropin", "0.5 mg", "i.v.", "bei Bedarf", now_dt() + timedelta(hours=0))
+add_med(10, "Bisoprolol", "1.25 mg", "p.o.", "1x morgens", now_dt() + timedelta(hours=0))
 
 # Patient 11
-add_med(11, "Piperacillin/Tazobactam", "4.5 g", "i.v.", "alle 8h", now_dt() + timedelta(hours=1))
-add_med(11, "Novalgin", "500 mg", "p.o.", "2x täglich", due_morning)
-add_med(11, "Humalog", "4 IE", "s.q.", "2x täglich", due_morning)
+add_med(11, "Piperacillin/Tazobactam", "4.5 g", "i.v.", "alle 8h", now_dt() + timedelta(hours=0))
+add_med(11, "Novalgin", "500 mg", "p.o.", "2x täglich", now_dt() + timedelta(hours=0))
+add_med(11, "Humalog", "4 IE", "s.q.", "2x täglich", now_dt() + timedelta(hours=0))
 
 # Insert meds
 cur.executemany("""
@@ -410,11 +410,6 @@ def add_order(patient_id, desc, days_from_now, hour, minute, status, ordered_by,
         ordered_by,
         typ
     ))
-
-for pid in range(1, 11):
-    add_order(pid, "Vitalzeichenkontrolle nach Standard", 0, 0, 0, "offen", "Station", "Pflegeaufgabe")
-    add_order(pid, "Bilanzierung 24h", 0, 0, 0, "offen", "Station", "Pflegeaufgabe")
-    add_order(pid, "Gewichtskontrolle täglich", 0, 0, 0, "offen", "Station", "Anordnung")
 
 # Add a couple special orders
 add_order(1, "Blutbild - Routine", 0, 0, 0, "geplant", "Dr. Roth", "Diagnostik")
