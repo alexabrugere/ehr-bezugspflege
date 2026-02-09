@@ -114,7 +114,7 @@ function fillPhrase(text) {
   box.focus();
 }
 
-/* --- Web Speech API (works on many browsers, iOS Safari support varies) --- */
+/* --- Web Speech API --- */
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 let rec = null;
 
@@ -129,15 +129,33 @@ if (SpeechRecognition) {
   rec.continuous = true;
 
   let finalText = "";
+  let silenceTimer = null;
+  const SILENCE_TIMEOUT = 1500;
 
   rec.onresult = (event) => {
     let interim = "";
+    clearTimeout(silenceTimer);
+
     for (let i = event.resultIndex; i < event.results.length; i++) {
       const t = event.results[i][0].transcript;
-      if (event.results[i].isFinal) finalText += t + "\n";
-      else interim += t;
+      if (t.trim().length < 2) continue;
+
+      if (event.results[i].isFinal) {
+        finalText += t + "\n";
+      } else {
+        interim += t;
+      }
     }
+
     spokenBox.value = (finalText + interim).trim();
+
+    silenceTimer = setTimeout(() => {
+      rec.stop();
+    }, SILENCE_TIMEOUT);
+  };
+
+  rec.onspeechend = () => {
+    rec.stop();
   };
 
   rec.onend = () => {
@@ -149,9 +167,11 @@ if (SpeechRecognition) {
     try {
       btnStart.disabled = true;
       btnStop.disabled = false;
+      finalText = "";
+      spokenBox.value = "";
+      clearTimeout(silenceTimer);
       rec.start();
     } catch (e) {
-      // start can throw if called twice quickly
       btnStart.disabled = false;
       btnStop.disabled = true;
       console.log(e);
@@ -163,8 +183,8 @@ if (SpeechRecognition) {
     btnStart.disabled = false;
     rec.stop();
   });
+
 } else {
-  // Hide voice buttons if unsupported
   btnStart.style.display = "none";
   btnStop.style.display  = "none";
 }
